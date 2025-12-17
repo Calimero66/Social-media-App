@@ -1,0 +1,111 @@
+import User from "../models/user.js";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+
+export const registerUser = async (req, res) => {
+    try {
+        const { username, password, email } = req.body;
+
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ error: "User already exists" });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newUser = new User({ username, password: hashedPassword, email });
+        await newUser.save();
+
+        const token = jwt.sign(
+            // Payload
+            { userId: newUser._id, email: newUser.email },
+            process.env.SECRET_KEY,
+            { expiresIn: "1h" }
+        );
+
+        // Set token in cookies
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            maxAge: 60 * 60 * 1000, 
+        });
+
+        res.status(201).json({ message: "User registered successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Registration failed" });
+    }
+};
+
+export const loginUser = async (req, res) => {
+    try {
+        const { username, password } = req.body;
+
+        const user = await User.findOne({ username });
+        if (!user) {
+            return res.status(401).json({ error: "Authentication failed" });
+        }
+
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        if (!passwordMatch) {
+            return res.status(401).json({ error: "Authentication failed" });
+        }
+
+        const token = jwt.sign(
+            //payload 
+            { userId: user._id },
+            process.env.SECRET_KEY,
+            { expiresIn: "1h" }
+        );
+
+        // Set token in cookies
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            maxAge: 60 * 60 * 1000,
+        });
+
+        res.status(200).json({ message: "Login successful", yourUserToken: "Bearer " + token });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Login failed" });
+    }
+};
+
+export const logoutUser = (req, res) => {
+    res.cookie("token", "", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        expires: new Date(0),
+    });
+    res.status(200).json({ message: "Logged out successfully" });
+};
+
+export const protectedRoute = (req, res) => {
+    return res.status(200).json();
+};
+
+export const getUser = async (req, res) => {
+    try {
+        // this can be used to get all the user data but we only need username and email
+        // const user = await User.findById(req.user.userId)
+        // res.status(200).json(user); 
+        const user = await User.findById(req.user.userId).select("_id username email");
+        res.status(200).json(user);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Failed to get user" });
+    }
+}
+
+export const getUseById = async (req, res) => {
+    try {
+        const { userId } = req.params ;
+        const user = await User.findById(userId).select("username");
+        res.status(200).json(user);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to get user" })
+    }
+};
