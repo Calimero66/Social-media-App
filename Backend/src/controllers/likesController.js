@@ -1,5 +1,5 @@
 import Post from "../models/post";
-import Like from "../models/like";
+import Like from "../models/postlikes";
 
 export const likePost = async (req, res) => {
     try {

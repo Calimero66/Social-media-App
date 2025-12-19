@@ -11,6 +11,7 @@ import { createPost, updatePost, deletePost , getAllPosts ,getPost , getPostsByA
 import { isAuthenticated } from '../middleware/auth.js'; 
 import { upload } from '../middleware/uploadMiddleware.js'; 
 import { createComment, deleteComment, getCommentByPost, updateComment } from '../controllers/commentController.js';
+import { likePost } from '../controllers/likesController.js';
 
 const router = express.Router();
 
@@ -32,6 +33,7 @@ router.get('/protected', isAuthenticated, (req, res) => {
 router.post('/createPost', isAuthenticated, upload.single("image"), createPost);
 router.put('/updatePost/:postId', isAuthenticated, upload.single('image'), updatePost);
 router.delete("/deletePost/:postId", isAuthenticated, deletePost);
+router.delete("/likePost/", isAuthenticated, likePost);
 
 // Route for find posts
 router.get('/getMyPosts',isAuthenticated, getMyPosts);

@@ -15,7 +15,7 @@ const ProtLayout = () => {
 
         const auth = async () => {
             try {
-                const response = await axios.get("http://localhost:8000/api/blogs/isAuthenticated",  { withCredentials: true });
+                const response = await axios.get("http://localhost:8000/api/sma/isAuthenticated",  { withCredentials: true });
                 // alert("token find");
                 setIsAuthenticated(true);
                 // console.log(response);
