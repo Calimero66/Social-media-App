@@ -43,7 +43,7 @@ const WritePage = () => {
 
         try {
             const response = await axios.post(
-                'http://localhost:8000/api/blogs/createPost',
+                'http://localhost:8000/api/sma/createPost',
                 formData,
                 {
                     headers: {

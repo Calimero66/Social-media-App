@@ -39,7 +39,7 @@ const PostDetail = () => {
     useEffect(() => {
         const fetchPost = async () => {
             try {
-                const response = await axios.get(`http://localhost:8000/api/blogs/getPost/${postId}`)
+                const response = await axios.get(`http://localhost:8000/api/sma/getPost/${postId}`)
                 setPost(response.data)
 
                 if (response.data.tags) {
@@ -65,7 +65,7 @@ const PostDetail = () => {
         const getUserByID = async () => {
             if (!post || !post.author) return
             try {
-                const response = await axios.get(`http://localhost:8000/api/blogs/getUseById/${post.author}`, {
+                const response = await axios.get(`http://localhost:8000/api/sma/getUseById/${post.author}`, {
                     withCredentials: true,
                 })
                 setData(response.data)
@@ -80,7 +80,7 @@ const PostDetail = () => {
     useEffect(() => {
         const checkUser = async () => {
             try {
-                const response = await axios.get(`http://localhost:8000/api/blogs/getUser`, { withCredentials: true })
+                const response = await axios.get(`http://localhost:8000/api/sma/getUser`, { withCredentials: true })
                 setCheck(response.data)
             } catch (err) {
                 console.error("Error fetching user:", err)
@@ -93,7 +93,7 @@ const PostDetail = () => {
     const fetchComments = async () => {
         if (!postId) return
         try {
-            const response = await axios.get(`http://localhost:8000/api/blogs/comment/${postId}`)
+            const response = await axios.get(`http://localhost:8000/api/sma/comment/${postId}`)
             console.log("Comments data:", response.data)
             setComments(response.data)
         } catch (error) {
@@ -107,7 +107,7 @@ const PostDetail = () => {
 
     const handleDelete = async () => {
         try {
-            await axios.delete(`http://localhost:8000/api/blogs/deletePost/${postId}`, { withCredentials: true })
+            await axios.delete(`http://localhost:8000/api/sma/deletePost/${postId}`, { withCredentials: true })
             navigate("/profile")
         } catch (err) {
             console.error(err)
@@ -133,7 +133,7 @@ const PostDetail = () => {
 
         try {
             await axios.put(
-                `http://localhost:8000/api/blogs/comment/${commentId}`,
+                `http://localhost:8000/api/sma/comment/${commentId}`,
                 { content: editCommentRef.current.value },
                 { withCredentials: true },
             )
@@ -153,7 +153,7 @@ const PostDetail = () => {
 
     const handleDeleteComment = async (commentId) => {
         try {
-            await axios.delete(`http://localhost:8000/api/blogs/comment/${commentId}`, { withCredentials: true })
+            await axios.delete(`http://localhost:8000/api/sma/comment/${commentId}`, { withCredentials: true })
             setComments(comments.filter((comment) => comment._id !== commentId))
             toast.success("Your comment has been deleted successfully.")
         } catch (error) {
@@ -280,7 +280,7 @@ const PostDetail = () => {
                             setIsSubmittingComment(true)
                             axios
                                 .post(
-                                    `http://localhost:8000/api/blogs/comment?post=${postId}`,
+                                    `http://localhost:8000/api/sma/comment?post=${postId}`,
                                     { content: commentInputRef.current.value },
                                     { withCredentials: true },
                                 )

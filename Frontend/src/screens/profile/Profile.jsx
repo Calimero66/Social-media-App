@@ -1,4 +1,4 @@
-import { Globe, Instagram, Twitter, ImageIcon, Video, Smile, X } from "lucide-react"
+import { Globe, Instagram, Twitter } from "lucide-react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -6,12 +6,11 @@ import { Card, CardContent } from "@/components/ui/card"
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import axios from "axios"
+import CreatePost from "@/components/CreatePost"
 
 const Profile = () => {
     const [data, setData] = useState([])
     const [posts, setPosts] = useState([])
-    const [isPostModalOpen, setIsPostModalOpen] = useState(false)
-    const [postContent, setPostContent] = useState("")
     const navigate = useNavigate()
 
     useEffect(() => {
@@ -56,7 +55,7 @@ const Profile = () => {
                     </h1>
                     <p className="text-gray-500 text-lg">@{data.username}</p>
                     <p className="mt-4 text-gray-600 leading-relaxed px-4">
-                        Welcome to My Blog, a space where ideas, experiences, and insights come to life. Whether you're here for
+                        Welcome to My Page, a space where ideas, experiences, and insights come to life. Whether you're here for
                         inspiration, knowledge, or just a good read, you'll find something that resonates with you.
                     </p>
                     <div className="flex justify-center gap-2 mt-6">
@@ -89,41 +88,7 @@ const Profile = () => {
 
                 <div className="container py-8 max-w-6xl">
                     {/* Post Creation Section */}
-                    <Card className="mb-8 border-0 shadow-lg bg-white/80 backdrop-blur-sm">
-                        <CardContent className="p-4">
-                            <div className="flex items-center gap-3">
-                                <Avatar className="w-12 h-12 ring-2 ring-blue-100">
-                                    <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-                                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
-                                        {data.username?.[0]?.toUpperCase() || "U"}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <button
-                                    onClick={() => setIsPostModalOpen(true)}
-                                    className="flex-1 text-left px-5 py-3 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-500 transition-all cursor-pointer"
-                                >
-                                    What's on your mind, {data.username}?
-                                </button>
-                            </div>
-                            <div className="flex items-center gap-2 mt-4 pt-4 border-t">
-                                <Button variant="ghost" className="flex-1 gap-2 hover:bg-red-50 hover:text-red-600 transition-all">
-                                    <Video className="h-5 w-5 text-red-500" />
-                                    <span>Video</span>
-                                </Button>
-                                <Button variant="ghost" className="flex-1 gap-2 hover:bg-green-50 hover:text-green-600 transition-all">
-                                    <ImageIcon className="h-5 w-5 text-green-500" />
-                                    <span>Photo</span>
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    className="flex-1 gap-2 hover:bg-yellow-50 hover:text-yellow-600 transition-all"
-                                >
-                                    <Smile className="h-5 w-5 text-yellow-500" />
-                                    <span>Feeling</span>
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <CreatePost username={data.username} />
 
                     <div className="grid gap-8">
                         {/* Featured Article */}
@@ -212,74 +177,6 @@ const Profile = () => {
                     </div>
                 </div>
             </section>
-
-            {/* Create Post Modal */}
-            {isPostModalOpen && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden animate-in fade-in zoom-in duration-200">
-                        {/* Modal Header */}
-                        <div className="flex items-center justify-between p-4 border-b">
-                            <h2 className="text-xl font-bold text-gray-800">Create Post</h2>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setIsPostModalOpen(false)}
-                                className="rounded-full hover:bg-gray-100"
-                            >
-                                <X className="h-5 w-5" />
-                            </Button>
-                        </div>
-
-                        {/* Modal Body */}
-                        <div className="p-4 max-h-[60vh] overflow-y-auto">
-                            <div className="flex items-center gap-3 mb-4">
-                                <Avatar className="w-10 h-10 ring-2 ring-blue-100">
-                                    <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-                                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
-                                        {data.username?.[0]?.toUpperCase() || "U"}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <p className="font-semibold text-gray-800">{data.username}</p>
-                                </div>
-                            </div>
-
-                            <textarea
-                                value={postContent}
-                                onChange={(e) => setPostContent(e.target.value)}
-                                placeholder={`What's on your mind, ${data.username}?`}
-                                className="w-full min-h-[150px] p-4 text-lg resize-none focus:outline-none text-gray-800 placeholder-gray-400"
-                                autoFocus
-                            />
-
-                            <div className="border border-gray-200 rounded-xl p-4 mt-4">
-                                <p className="text-sm font-semibold text-gray-800 mb-3">Add to your post</p>
-                                <div className="flex items-center gap-2">
-                                    <Button variant="ghost" size="icon" className="hover:bg-green-50 rounded-full">
-                                        <ImageIcon className="h-6 w-6 text-green-500" />
-                                    </Button>
-                                    <Button variant="ghost" size="icon" className="hover:bg-red-50 rounded-full">
-                                        <Video className="h-6 w-6 text-red-500" />
-                                    </Button>
-                                    <Button variant="ghost" size="icon" className="hover:bg-yellow-50 rounded-full">
-                                        <Smile className="h-6 w-6 text-yellow-500" />
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Modal Footer */}
-                        <div className="p-4 border-t">
-                            <Button
-                                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 rounded-xl shadow-lg transition-all"
-                                disabled={!postContent.trim()}
-                            >
-                                Post
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </>
     )
 }
