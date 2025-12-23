@@ -1,4 +1,5 @@
 import Post from "../models/post.js";
+import Like from "../models/postlikes.js";
 
 export const createPost = async (req, res) => {
     try {
@@ -37,7 +38,7 @@ export const createPost = async (req, res) => {
 export const updatePost = async (req, res) => {
     try {
         const { postId } = req.params;
-        const { content, tags, image } = req.body;
+        const { content, tags } = req.body;
         const userId = req.user.userId;
 
         const post = await Post.findById(postId);
@@ -52,11 +53,23 @@ export const updatePost = async (req, res) => {
 
         post.content = content || post.content;
         post.tags = tags || post.tags;
-        post.image = image || post.image;
+        
+        // Handle new file upload
+        if (req.file) {
+            const filePath = `/uploads/${req.file.filename}`;
+            const isVideo = req.file.mimetype.startsWith('video/');
+            
+            if (isVideo) {
+                post.video = filePath;
+                post.image = null;
+            } else {
+                post.image = filePath;
+                post.video = null;
+            }
+        }
 
         const updatedPost = await post.save();
         res.status(200).json(updatedPost);
-        // res.status(200).json({ message: "Post updated successfully", updatedPost });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Failed to update post.", error: error.message });
@@ -97,45 +110,6 @@ export const getAllPosts = async (req, res) => {
         res.status(500).json({ message: "Failed to fetch posts.", error: error.message });
     }
 };
-
-export const getTags = async (req, res) => {
-    try {
-        const tagsPost = await Post.find({}, 'tags');
-        // console.log("🚀 ~ tagsPost:", tagsPost);
-
-         // Extract tags from all posts and flatten the array
-        const allTags = tagsPost.reduce((acc, post) =>{
-            return [...acc, ...(JSON.parse(post.tags) || [])]}, []);
-
-        const uniqueTags = [...new Set(allTags)];
-        res.status(200).json(uniqueTags);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Failed to fetch posts.", error: error.message });
-    }
-};
-
-export const getPostsByTag = async (req, res) => {
-    try {
-        let tag = req.query.tag; // Get tag from query params
-
-        if (!tag) {
-            return res.status(400).json({ message: "Tag parameter is required" });
-        }
-
-        tag = String(tag); // Ensure tag is a string
-
-        const posts = await Post.find({
-            tags: { $regex: new RegExp(tag, "i") } // Case-insensitive regex search
-        });
-
-        res.status(200).json(posts);
-    } catch (error) {
-        console.error("Error fetching posts by tag:", error);
-        res.status(500).json({ message: "Failed to fetch posts by tag.", error: error.message });
-    }
-};
-
 
 export const getMyPosts = async (req, res) => {
     try {
@@ -185,5 +159,18 @@ export const getPostsByAuthor = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Failed to fetch posts.", error: error.message });
+    }
+};
+
+// Get liked posts for current user
+export const getLikedPosts = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const likedPosts = await Like.find({ user: userId }).populate('post');
+        const posts = likedPosts.map(like => like.post);
+        res.status(200).json(posts);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Failed to fetch liked posts.", error: error.message });
     }
 };

@@ -3,13 +3,10 @@ import Layout from "./components/layout/Layout";
 import LoginScreen from "./screens/LoginScreen";
 import RegisterForm from "./screens/RegisterScreen";
 import HomeScreen from "./screens/HomeScreen";
-import TagsScreen from "./screens/TagsScreen";
 import AboutScreen from "./screens/AboutScreen";
 import Profile from "./screens/profile/Profile";
 import UserProfile from "./screens/profile/UserProfile";
 import ProtLayout from "./components/layout/protLayout";
-import WritePage from "./screens/WritePost";
-import PostDetail from "./screens/PostDetail";
 import EditPost from "./screens/EditPost";
 
 const router = createBrowserRouter([
@@ -21,7 +18,7 @@ const router = createBrowserRouter([
             { path: "/login", element: <LoginScreen /> },
             { path: "/register", element: <RegisterForm /> },
             { path: "/home", element: <HomeScreen />, index: true },
-            { path: "/Tags", element: <TagsScreen /> },
+
             { path: "/about", element: <AboutScreen /> },
             { path: "/user/:userId", element: <UserProfile /> },
         ],
@@ -34,9 +31,7 @@ const router = createBrowserRouter([
         element: <ProtLayout />,
         children: [
             { path: "/profile", element: <Profile />, index: true },
-            { path: "/WritePost", element: <WritePage /> },
-            { path: "/post/:postId", element: <PostDetail />},
-            { path: "/edit/:id", element: <EditPost/>},
+            { path: "/edit-post/:postId", element: <EditPost/>},
 
         ],
 

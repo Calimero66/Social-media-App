@@ -92,7 +92,7 @@ export const getUser = async (req, res) => {
         // this can be used to get all the user data but we only need username and email
         // const user = await User.findById(req.user.userId)
         // res.status(200).json(user); 
-        const user = await User.findById(req.user.userId).select("_id username email");
+        const user = await User.findById(req.user.userId).select("_id username email followers following").populate('followers', 'username').populate('following', 'username');
         res.status(200).json(user);
     } catch (error) {
         console.error(error);
@@ -103,9 +103,69 @@ export const getUser = async (req, res) => {
 export const getUseById = async (req, res) => {
     try {
         const { userId } = req.params ;
-        const user = await User.findById(userId).select("username");
+        const user = await User.findById(userId).select("_id username email followers following").populate('followers', 'username').populate('following', 'username');
         res.status(200).json(user);
     } catch (error) {
         res.status(500).json({ error: "Failed to get user" })
+    }
+};
+
+export const getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find({}).select("_id username email");
+        res.status(200).json(users);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Failed to get users" });
+    }
+};
+
+export const updateProfile = async (req, res) => {
+    try {
+        const { username, email, bio } = req.body;
+        const userId = req.user.userId;
+
+        // Validate input
+        if (!username || !username.trim()) {
+            return res.status(400).json({ message: "Username is required" });
+        }
+
+        // Check if username is already taken by another user
+        if (username.trim() !== "") {
+            const existingUser = await User.findOne({ 
+                username: username.trim(),
+                _id: { $ne: userId }
+            });
+            if (existingUser) {
+                return res.status(400).json({ message: "Username already taken" });
+            }
+        }
+
+        // Check if email is already taken by another user
+        if (email && email.trim() !== "") {
+            const existingEmail = await User.findOne({ 
+                email: email.trim(),
+                _id: { $ne: userId }
+            });
+            if (existingEmail) {
+                return res.status(400).json({ message: "Email already in use" });
+            }
+        }
+
+        // Update user
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            {
+                username: username.trim(),
+                email: email ? email.trim() : undefined,
+                bio: bio || ""
+            },
+            { new: true }
+        ).select("_id username email bio followers following").populate('followers', 'username').populate('following', 'username');
+
+        res.status(200).json(updatedUser);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Failed to update profile" });
     }
 };

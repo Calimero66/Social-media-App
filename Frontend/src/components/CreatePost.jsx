@@ -63,7 +63,6 @@ const CreatePost = ({ username, onPostCreated }) => {
         formData.append("content", content)
         if (image) formData.append("image", image)
         if (video) formData.append("image", video)
-        formData.append("tags", JSON.stringify([]))
 
         try {
             const response = await axios.post(
@@ -259,9 +258,9 @@ const CreatePost = ({ username, onPostCreated }) => {
                                     >
                                         <Video className="h-6 w-6 text-red-500" />
                                     </Button>
-                                    <Button variant="ghost" size="icon" className="hover:bg-yellow-50 rounded-full">
+                                    {/* <Button variant="ghost" size="icon" className="hover:bg-yellow-50 rounded-full">
                                         <Smile className="h-6 w-6 text-yellow-500" />
-                                    </Button>
+                                    </Button> */}
                                 </div>
                             </div>
                         </div>

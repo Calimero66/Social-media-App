@@ -78,7 +78,7 @@ const NavBar = () => {
                         to={profile ? "/home" : "/login"}
                         className="font-black text-2xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent hover:from-blue-700 hover:to-purple-700 transition-all"
                     >
-                        IumSma
+                        FaceMook
                     </Link>
 
                     {profile && (
@@ -88,12 +88,6 @@ const NavBar = () => {
                                 className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
                             >
                                 Home
-                            </Link>
-                            <Link
-                                to="/tags"
-                                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                            >
-                                Tags
                             </Link>
                             <Link
                                 to="/about"
@@ -150,20 +144,6 @@ const NavBar = () => {
                                                     />
                                                 </svg>
                                                 Profile
-                                            </Link>
-                                            <Link
-                                                to="/WritePost"
-                                                className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth={2}
-                                                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                                                    />
-                                                </svg>
-                                                Write a Post
                                             </Link>
                                         </div>
 

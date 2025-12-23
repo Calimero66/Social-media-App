@@ -7,6 +7,7 @@ import PostCard from "@/components/PostCard"
 const HomeScreen = () => {
     const [posts, setPosts] = useState([])
     const [authors, setAuthors] = useState({})
+    const [currentUserId, setCurrentUserId] = useState(null)
     const navigate = useNavigate()
 
     const fetchPosts = async () => {
@@ -38,6 +39,15 @@ const HomeScreen = () => {
     }
 
     useEffect(() => {
+        const getCurrentUser = async () => {
+            try {
+                const response = await axios.get("http://localhost:8000/api/sma/getUser", { withCredentials: true })
+                setCurrentUserId(response.data._id)
+            } catch (err) {
+                console.error(err)
+            }
+        }
+        getCurrentUser()
         fetchPosts()
     }, [])
 
@@ -55,7 +65,10 @@ const HomeScreen = () => {
                             key={post._id}
                             post={post}
                             username={authors[post.author] || "Loading..."}
+                            authorId={post.author}
+                            currentUserId={currentUserId}
                             onClick={() => handlePostClick(post._id)}
+                            onPostDeleted={fetchPosts}
                         />
                     ))}
                 </div>

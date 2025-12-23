@@ -10,18 +10,30 @@ import { useNavigate } from "react-router-dom"
 import axios from "axios"
 import CreatePost from "@/components/CreatePost"
 import PostCard from "@/components/PostCard"
+import SettingsModal from "@/components/SettingsModal"
 import { Toaster } from "sonner"
 
 const Profile = () => {
     const [data, setData] = useState({})
     const [posts, setPosts] = useState([])
+    const [likedPosts, setLikedPosts] = useState([])
     const [activeTab, setActiveTab] = useState("posts")
+    const [showSettings, setShowSettings] = useState(false)
     const navigate = useNavigate()
 
     const fetchPosts = async () => {
         try {
             const res = await axios.get("http://localhost:8000/api/sma/getMyPosts", { withCredentials: true })
             setPosts(res.data)
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
+    const fetchLikedPosts = async () => {
+        try {
+            const res = await axios.get("http://localhost:8000/api/sma/getLikedPosts", { withCredentials: true })
+            setLikedPosts(res.data)
         } catch (err) {
             console.error(err)
         }
@@ -39,10 +51,15 @@ const Profile = () => {
 
         getUser()
         fetchPosts()
+        fetchLikedPosts()
     }, [])
 
     const handleCardClick = (postId) => {
         navigate(`/post/${postId}`)
+    }
+
+    const handleProfileUpdate = (updatedData) => {
+        setData(updatedData)
     }
 
     return (
@@ -93,7 +110,12 @@ const Profile = () => {
                                 </div>
 
                                 <div className="flex gap-2">
-                                    <Button variant="outline" size="icon" className="rounded-full">
+                                    <Button 
+                                        variant="outline" 
+                                        size="icon" 
+                                        className="rounded-full"
+                                        onClick={() => setShowSettings(true)}
+                                    >
                                         <Settings className="h-4 w-4" />
                                     </Button>
                                 </div>
@@ -106,11 +128,11 @@ const Profile = () => {
                                     <div className="text-sm text-gray-500">Posts</div>
                                 </div>
                                 <div className="text-center">
-                                    <div className="text-2xl font-bold text-gray-900">1.2K</div>
+                                    <div className="text-2xl font-bold text-gray-900">{data.followers?.length || 0}</div>
                                     <div className="text-sm text-gray-500">Followers</div>
                                 </div>
                                 <div className="text-center">
-                                    <div className="text-2xl font-bold text-gray-900">890</div>
+                                    <div className="text-2xl font-bold text-gray-900">{data.following?.length || 0}</div>
                                     <div className="text-sm text-gray-500">Following</div>
                                 </div>
                             </div>
@@ -178,13 +200,16 @@ const Profile = () => {
 
                             {/* Posts Feed */}
                             <div className="flex flex-col gap-4">
-                                {posts.length > 0 ? (
-                                    posts.map((post) => (
+                                {posts.filter(post => post !== null).length > 0 ? (
+                                    posts.filter(post => post !== null).map((post) => (
                                         <PostCard 
                                             key={post._id} 
                                             post={post} 
                                             username={data.username} 
-                                            onClick={() => handleCardClick(post._id)} 
+                                            authorId={post.author}
+                                            currentUserId={data._id}
+                                            onClick={() => handleCardClick(post._id)}
+                                            onPostDeleted={fetchPosts}
                                         />
                                     ))
                                 ) : (
@@ -210,17 +235,42 @@ const Profile = () => {
                         </TabsContent>
 
                         <TabsContent value="liked" className="mt-0">
-                            <Card className="p-12 text-center border-0 bg-white/80 backdrop-blur-sm">
-                                <div className="text-gray-400 mb-2">
-                                    <Heart className="h-12 w-12 mx-auto opacity-50" />
-                                </div>
-                                <h3 className="text-lg font-semibold text-gray-700">No liked posts</h3>
-                                <p className="text-gray-500 text-sm mt-1">Posts you like will appear here</p>
-                            </Card>
+                            {/* Liked Posts Feed */}
+                            <div className="flex flex-col gap-4">
+                                {likedPosts.filter(post => post !== null).length > 0 ? (
+                                    likedPosts.filter(post => post !== null).map((post) => (
+                                        <PostCard 
+                                            key={post._id} 
+                                            post={post} 
+                                            username={data.username} 
+                                            authorId={post.author}
+                                            currentUserId={data._id}
+                                            onClick={() => handleCardClick(post._id)}
+                                            onPostDeleted={fetchLikedPosts}
+                                        />
+                                    ))
+                                ) : (
+                                    <Card className="p-12 text-center border-0 bg-white/80 backdrop-blur-sm">
+                                        <div className="text-gray-400 mb-2">
+                                            <Heart className="h-12 w-12 mx-auto opacity-50" />
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-gray-700">No liked posts</h3>
+                                        <p className="text-gray-500 text-sm mt-1">Posts you like will appear here</p>
+                                    </Card>
+                                )}
+                            </div>
                         </TabsContent>
                     </Tabs>
                 </div>
             </section>
+
+            <SettingsModal 
+                isOpen={showSettings}
+                onClose={() => setShowSettings(false)}
+                userData={data}
+                onSave={handleProfileUpdate}
+            />
+
             <Toaster position="top-right" richColors />
         </>
     )

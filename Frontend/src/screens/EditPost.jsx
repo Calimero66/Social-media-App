@@ -1,210 +1,254 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Tag, X } from 'lucide-react';
-import { toast, Toaster } from 'sonner';
+import { ImageIcon, Video, X } from "lucide-react"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { useState, useRef, useEffect } from "react"
+import axios from "axios"
+import { useNavigate, useParams } from "react-router-dom"
+import { toast } from "sonner"
 
-const EditPage = () => {
-    const { id } = useParams();
-    const navigate = useNavigate();
-
-    const [title, setTitle] = useState('');
-    const [content, setContent] = useState('');
-    const [image, setImage] = useState(null);
-    const [tags, setTags] = useState([]);
-    const [existingImage, setExistingImage] = useState('');
-
+const EditPost = () => {
+    const { postId } = useParams()
+    const navigate = useNavigate()
+    const [content, setContent] = useState("")
+    const [image, setImage] = useState(null)
+    const [imagePreview, setImagePreview] = useState(null)
+    const [video, setVideo] = useState(null)
+    const [videoPreview, setVideoPreview] = useState(null)
+    const [isLoading, setIsLoading] = useState(false)
+    const [username, setUsername] = useState("")
+    const imageInputRef = useRef(null)
+    const videoInputRef = useRef(null)
 
     useEffect(() => {
-        const fetchPost = async () => {
+        const fetchData = async () => {
             try {
-                const { data } = await axios.get(`http://localhost:8000/api/blogs/getPost/${id}`);
-                setTitle(data.title);
-                setContent(data.content);
-                if (data.tags) {
-                    
-                    let parsedTags;
-                    try {
-                        // Handle nested JSON strings
-                        const parsed = JSON.parse(data.tags);
-                        parsedTags = Array.isArray(parsed) ? parsed : JSON.parse(parsed);
-                    } catch {
-                        // If parsing fails, treat as regular array or string
-                        parsedTags = Array.isArray(data.tags) ? data.tags : [data.tags];
-                    }
-                    setTags(parsedTags);
+                const [postRes, userRes] = await Promise.all([
+                    axios.get(`http://localhost:8000/api/sma/getPost/${postId}`),
+                    axios.get(`http://localhost:8000/api/sma/getUser`, { withCredentials: true })
+                ])
+                
+                setContent(postRes.data.content)
+                setUsername(userRes.data.username)
+                
+                if (postRes.data.image) {
+                    setImagePreview(`http://localhost:8000${postRes.data.image}`)
+                } else if (postRes.data.video) {
+                    setVideoPreview(`http://localhost:8000${postRes.data.video}`)
                 }
-                setExistingImage(data.image);
             } catch (error) {
-                console.error('Error fetching post:', error);
-                toast.error('Failed to load post');
+                console.error(error)
+                toast.error("Failed to load post")
             }
-        };
-        fetchPost();
-    }, [id]);
+        }
+
+        fetchData()
+    }, [postId])
 
     const handleImageUpload = (e) => {
-        const file = e.target.files[0];
-        setImage(file);
-        setExistingImage('');
-    };
-
-    const addTag = (tagInput) => {
-        if (!tagInput) return;
-        const trimmedTag = tagInput.trim();
-        if (!tags.includes(trimmedTag)) {
-            setTags([...tags, trimmedTag]);
+        const file = e.target.files[0]
+        if (file) {
+            console.log("Image file selected:", file)
+            setImage(file)
+            setImagePreview(URL.createObjectURL(file))
+            setVideo(null)
+            setVideoPreview(null)
+            e.target.value = ""
         }
-    };
+    }
 
-    const removeTag = (tagToRemove) => {
-        setTags(tags.filter((tag) => tag !== tagToRemove));
-    };
+    const handleVideoUpload = (e) => {
+        const file = e.target.files[0]
+        if (file) {
+            setVideo(file)
+            setVideoPreview(URL.createObjectURL(file))
+            setImage(null)
+            setImagePreview(null)
+        }
+    }
 
-    
-    const handleUpdate = async (e) => {
-        e.preventDefault();
+    const removeImage = () => {
+        setImage(null)
+        setImagePreview(null)
+        if (imageInputRef.current) {
+            imageInputRef.current.value = ""
+        }
+    }
 
-        const formData = new FormData();
-        formData.append('title', title);
-        formData.append('content', content);
-        if (image) formData.append('image', image);
+    const removeVideo = () => {
+        setVideo(null)
+        setVideoPreview(null)
+        if (videoInputRef.current) {
+            videoInputRef.current.value = ""
+        }
+    }
+
+    const handleSubmit = async () => {
+        if (!content.trim() && !image && !video && !imagePreview && !videoPreview) return
+
+        setIsLoading(true)
+
+        const formData = new FormData()
+        formData.append("content", content)
         
-        formData.append('tags', JSON.stringify(tags));
-        console.log('normale tags ' ,tags);
-        console.log('json atawich ',JSON.stringify(tags));
-        
+        // Only append new file if it's a File object (not a string path to existing image)
+        if (image && image instanceof File) formData.append("image", image)
+        if (video && video instanceof File) formData.append("image", video)
 
         try {
             await axios.put(
-                `http://localhost:8000/api/blogs/updatePost/${id}`,
+                `http://localhost:8000/api/sma/updatePost/${postId}`,
                 formData,
                 {
                     headers: {
-                        'Content-Type': 'multipart/form-data',
+                        "Content-Type": "multipart/form-data",
                     },
-                    withCredentials: true
+                    withCredentials: true,
                 }
-            );
+            )
 
-            toast.success('Post updated successfully');
-            navigate(`/post`);
+            toast.success("Post updated successfully!")
+            navigate(-1)
         } catch (error) {
-            console.error('Error updating post:', error.message);
-            toast.error('Failed to update post');
+            console.error("Post update error:", error)
+            toast.error("Failed to update post")
+        } finally {
+            setIsLoading(false)
         }
-    };
+    }
 
     return (
-        <div className="p-6 max-w-4xl mx-auto">
-            <Toaster richColors />
-            <h1 className="text-3xl font-serif mb-6">Edit Post</h1>
-            <form onSubmit={handleUpdate} className="space-y-6">
-                {/* Title */}
-                <div>
-                    <Label htmlFor="title">Title</Label>
-                    <Input
-                        id="title"
-                        className="text-2xl font-semibold"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                    />
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden animate-in fade-in zoom-in duration-200">
+                {/* Modal Header */}
+                <div className="flex items-center justify-between p-4 border-b">
+                    <h2 className="text-xl font-bold text-gray-800">Edit Post</h2>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => navigate(-1)}
+                        className="rounded-full hover:bg-gray-100"
+                    >
+                        <X className="h-5 w-5" />
+                    </Button>
                 </div>
 
-                {/* Image */}
-                <div>
-                    <Label htmlFor="image">Cover Image</Label>
-                    {existingImage && (
-                        <div className="mt-2">
-                            <img
-                                src={`http://localhost:8000${existingImage}`}
-                                alt="Existing cover"
-                                className="w-full h-64 object-cover rounded-md"
-                            />
+                {/* Modal Body */}
+                <div className="p-4 max-h-[60vh] overflow-y-auto">
+                    <div className="flex items-center gap-3 mb-4">
+                        <Avatar className="w-10 h-10 ring-2 ring-blue-100">
+                            <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+                            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
+                                {username?.[0]?.toUpperCase() || "U"}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <p className="font-semibold text-gray-800">{username}</p>
                         </div>
-                    )}
-                    <div className="mt-2">
-                        <Input
-                            id="image"
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                        />
                     </div>
-                </div>
 
-                {/* Content */}
-                <div>
-                    <Label htmlFor="content">Content</Label>
-                    <Textarea
-                        id="content"
-                        rows={12}
+                    {/* Content Textarea */}
+                    <textarea
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
+                        placeholder={`What's on your mind, ${username}?`}
+                        className="w-full min-h-[120px] p-3 text-lg resize-none focus:outline-none text-gray-800 placeholder-gray-400"
+                        autoFocus
                     />
-                </div>
 
-                {/* Tags */}
-                <div>
-                    <Label htmlFor="tags">Tags</Label>
-                    <div className="flex items-center mt-2">
-                        <Input
-                            id="tags"
-                            placeholder="Add a tag"
-                            onKeyPress={(e) => {
-                                if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    addTag(e.target.value);
-                                    e.target.value = '';
-                                }
-                            }}
-                        />
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            className="ml-2"
-                            onClick={() => {
-                                const input = document.getElementById('tags');
-                                addTag(input.value);
-                                input.value = '';
-                            }}
-                        >
-                            <Tag className="h-4 w-4" />
-                        </Button>
-                    </div>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                        {tags.map((tag, index) => (
-                            <div
-                                key={index}
-                                className="bg-secondary text-secondary-foreground px-2 py-1 rounded-md flex items-center"
+                    {/* Image Preview */}
+                    {imagePreview && (
+                        <div className="relative mt-3 rounded-xl overflow-hidden">
+                            <img
+                                src={imagePreview}
+                                alt="Preview"
+                                className="w-full max-h-[200px] object-cover rounded-xl"
+                            />
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={removeImage}
+                                className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full"
                             >
-                                {tag}
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-4 w-4 ml-1"
-                                    onClick={() => removeTag(tag)}
-                                >
-                                    <X className="h-3 w-3" />
-                                </Button>
-                            </div>
-                        ))}
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    )}
+
+                    {/* Video Preview */}
+                    {videoPreview && (
+                        <div className="relative mt-3 rounded-xl overflow-hidden">
+                            <video
+                                src={videoPreview}
+                                controls
+                                className="w-full max-h-[200px] object-cover rounded-xl"
+                            />
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={removeVideo}
+                                className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full"
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    )}
+
+                    {/* Add to post section */}
+                    <div className="border border-gray-200 rounded-xl p-4 mt-4">
+                        <p className="text-sm font-semibold text-gray-800 mb-3">Update media</p>
+                        <div className="flex items-center gap-2">
+                            {/* Image Upload Input */}
+                            <input
+                                type="file"
+                                accept="image/jpeg,image/jpg,image/png,image/gif"
+                                onChange={handleImageUpload}
+                                ref={imageInputRef}
+                                className="hidden"
+                                id="image-upload"
+                            />
+                            {/* Video Upload Input */}
+                            <input
+                                type="file"
+                                accept="video/mp4,video/mov,video/avi,video/mkv,video/webm"
+                                onChange={handleVideoUpload}
+                                ref={videoInputRef}
+                                className="hidden"
+                                id="video-upload"
+                            />
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="hover:bg-green-50 rounded-full"
+                                onClick={() => imageInputRef.current?.click()}
+                            >
+                                <ImageIcon className="h-6 w-6 text-green-500" />
+                            </Button>
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="hover:bg-red-50 rounded-full"
+                                onClick={() => videoInputRef.current?.click()}
+                            >
+                                <Video className="h-6 w-6 text-red-500" />
+                            </Button>
+                        </div>
                     </div>
                 </div>
 
-                {/* Update Button */}
-                <div className="flex justify-end">
-                    <Button type="submit">Update Post</Button>
+                {/* Modal Footer */}
+                <div className="p-4 border-t">
+                    <Button
+                        onClick={handleSubmit}
+                        className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 rounded-xl shadow-lg transition-all"
+                        disabled={(!content.trim() && !image && !video && !imagePreview && !videoPreview) || isLoading}
+                    >
+                        {isLoading ? "Updating..." : "Update Post"}
+                    </Button>
                 </div>
-            </form>
+            </div>
         </div>
-    );
-};
+    )
+}
 
-export default EditPage;
+export default EditPost

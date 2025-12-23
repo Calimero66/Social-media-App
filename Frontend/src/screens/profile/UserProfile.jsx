@@ -14,18 +14,25 @@ const UserProfile = () => {
     const [user, setUser] = useState({})
     const [posts, setPosts] = useState([])
     const [loading, setLoading] = useState(true)
+    const [isFollowing, setIsFollowing] = useState(false)
+    const [isLoadingFollow, setIsLoadingFollow] = useState(false)
+    const [currentUserId, setCurrentUserId] = useState(null)
     const navigate = useNavigate()
 
     useEffect(() => {
         const fetchUserData = async () => {
             try {
                 setLoading(true)
-                const [userRes, postsRes] = await Promise.all([
+                const [userRes, postsRes, followRes, currentUserRes] = await Promise.all([
                     axios.get(`http://localhost:8000/api/sma/getUseById/${userId}`),
-                    axios.get(`http://localhost:8000/api/sma/getPostsByUserId/${userId}`)
+                    axios.get(`http://localhost:8000/api/sma/getPostsByUserId/${userId}`),
+                    axios.get(`http://localhost:8000/api/sma/checkFollowing/${userId}`, { withCredentials: true }).catch(() => ({ data: { following: false } })),
+                    axios.get(`http://localhost:8000/api/sma/getUser`, { withCredentials: true }).catch(() => ({ data: { _id: null } }))
                 ])
                 setUser(userRes.data)
                 setPosts(postsRes.data)
+                setIsFollowing(followRes.data.following)
+                setCurrentUserId(currentUserRes.data._id)
             } catch (err) {
                 console.error(err)
             } finally {
@@ -38,8 +45,41 @@ const UserProfile = () => {
         }
     }, [userId])
 
+    // Refetch user data when follow status changes
+    useEffect(() => {
+        const refetchUserStats = async () => {
+            try {
+                const userRes = await axios.get(`http://localhost:8000/api/sma/getUseById/${userId}`)
+                setUser(userRes.data)
+            } catch (err) {
+                console.error("Error refetching user stats:", err)
+            }
+        }
+
+        // Only refetch if isFollowing has actually changed after initial load
+        if (loading === false && userId) {
+            refetchUserStats()
+        }
+    }, [isFollowing, userId])
+
     const handleCardClick = (postId) => {
         navigate(`/post/${postId}`)
+    }
+
+    const handleFollow = async () => {
+        try {
+            setIsLoadingFollow(true)
+            if (isFollowing) {
+                await axios.post(`http://localhost:8000/api/sma/unfollow/${userId}`, {}, { withCredentials: true })
+            } else {
+                await axios.post(`http://localhost:8000/api/sma/follow/${userId}`, {}, { withCredentials: true })
+            }
+            setIsFollowing(!isFollowing)
+        } catch (err) {
+            console.error(err)
+        } finally {
+            setIsLoadingFollow(false)
+        }
     }
 
     if (loading) {
@@ -121,8 +161,16 @@ const UserProfile = () => {
                             </div>
 
                             <div className="flex gap-2">
-                                <Button className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white rounded-full px-6">
-                                    Follow
+                                <Button 
+                                    onClick={handleFollow}
+                                    disabled={isLoadingFollow}
+                                    className={`rounded-full px-6 ${
+                                        isFollowing 
+                                            ? 'bg-gray-300 hover:bg-gray-400 text-gray-800' 
+                                            : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white'
+                                    }`}
+                                >
+                                    {isLoadingFollow ? 'Loading...' : (isFollowing ? 'Following' : 'Follow')}
                                 </Button>
                             </div>
                         </div>
@@ -134,11 +182,11 @@ const UserProfile = () => {
                                 <div className="text-sm text-gray-500">Posts</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-gray-900">--</div>
+                                <div className="text-2xl font-bold text-gray-900">{user.followers?.length || 0}</div>
                                 <div className="text-sm text-gray-500">Followers</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-gray-900">--</div>
+                                <div className="text-2xl font-bold text-gray-900">{user.following?.length || 0}</div>
                                 <div className="text-sm text-gray-500">Following</div>
                             </div>
                         </div>
@@ -187,7 +235,12 @@ const UserProfile = () => {
                                 key={post._id} 
                                 post={post} 
                                 username={user.username} 
-                                onClick={() => handleCardClick(post._id)} 
+                                authorId={post.author}
+                                currentUserId={currentUserId}
+                                onClick={() => handleCardClick(post._id)}
+                                onPostDeleted={() => {
+                                    setPosts(posts.filter(p => p._id !== post._id))
+                                }}
                             />
                         ))
                     ) : (

@@ -246,7 +246,10 @@ const PostDetail = () => {
                 <h1 className="text-4xl font-extrabold leading-tight text-gray-900">{post.title}</h1>
 
                 <div className="flex items-center justify-between text-gray-600 text-sm">
-                    <div className="flex items-center space-x-3">
+                    <div 
+                        className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => navigate(`/user/${post.author}`)}
+                    >
                         <Avatar>
                             <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
                             <AvatarFallback>AB</AvatarFallback>
