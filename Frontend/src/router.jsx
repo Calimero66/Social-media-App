@@ -6,6 +6,7 @@ import HomeScreen from "./screens/HomeScreen";
 import TagsScreen from "./screens/TagsScreen";
 import AboutScreen from "./screens/AboutScreen";
 import Profile from "./screens/profile/Profile";
+import UserProfile from "./screens/profile/UserProfile";
 import ProtLayout from "./components/layout/protLayout";
 import WritePage from "./screens/WritePost";
 import PostDetail from "./screens/PostDetail";
@@ -22,6 +23,7 @@ const router = createBrowserRouter([
             { path: "/home", element: <HomeScreen />, index: true },
             { path: "/Tags", element: <TagsScreen /> },
             { path: "/about", element: <AboutScreen /> },
+            { path: "/user/:userId", element: <UserProfile /> },
         ],
 
     },

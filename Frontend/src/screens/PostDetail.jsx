@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { ArrowLeft, Edit2, Trash2, MessageSquare, Send } from "lucide-react"
+import { ArrowLeft, Edit2, Trash2, MessageSquare, Send, Heart } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -35,6 +35,9 @@ const PostDetail = () => {
     const editCommentRef = useRef(null)
     const [editingCommentId, setEditingCommentId] = useState(null)
     const [isSubmittingComment, setIsSubmittingComment] = useState(false)
+    const [likesCount, setLikesCount] = useState(0)
+    const [isLiked, setIsLiked] = useState(false)
+    const [isLiking, setIsLiking] = useState(false)
 
     useEffect(() => {
         const fetchPost = async () => {
@@ -104,6 +107,43 @@ const PostDetail = () => {
     useEffect(() => {
         fetchComments()
     }, [postId])
+
+    // Fetch likes count and check if user liked
+    useEffect(() => {
+        const fetchLikesData = async () => {
+            if (!postId) return
+            try {
+                const countRes = await axios.get(`http://localhost:8000/api/sma/likesCount/${postId}`)
+                setLikesCount(countRes.data.likesCount)
+
+                // Check if current user liked this post
+                const likedRes = await axios.get(`http://localhost:8000/api/sma/checkLiked/${postId}`, { withCredentials: true })
+                setIsLiked(likedRes.data.liked)
+            } catch (error) {
+                console.error("Error fetching likes:", error)
+            }
+        }
+        fetchLikesData()
+    }, [postId])
+
+    const handleLike = async () => {
+        if (!check?._id) {
+            toast.error("Please login to like posts")
+            return
+        }
+        setIsLiking(true)
+        try {
+            const response = await axios.post(`http://localhost:8000/api/sma/likePost/${postId}`, {}, { withCredentials: true })
+            setIsLiked(response.data.liked)
+            setLikesCount(response.data.likesCount)
+            toast.success(response.data.message)
+        } catch (error) {
+            console.error("Error liking post:", error)
+            toast.error("Failed to like post")
+        } finally {
+            setIsLiking(false)
+        }
+    }
 
     const handleDelete = async () => {
         try {
@@ -229,8 +269,33 @@ const PostDetail = () => {
                 </div>
             )}
 
+            {/* Post Video */}
+            {post.video && (
+                <div className="relative w-full rounded-lg overflow-hidden mb-6">
+                    <video 
+                        src={`http://localhost:8000${post.video}`} 
+                        controls 
+                        className="w-full max-h-[500px] object-contain bg-black rounded-lg"
+                    />
+                </div>
+            )}
+
             {/* Post Content */}
             <div className="prose prose-lg prose-gray max-w-none mb-6" dangerouslySetInnerHTML={{ __html: post.content }} />
+
+            {/* Like Section */}
+            <div className="flex items-center gap-4 mb-6 py-4 border-y border-gray-200">
+                <Button
+                    variant="ghost"
+                    onClick={handleLike}
+                    disabled={isLiking}
+                    className={`flex items-center gap-2 transition-all ${isLiked ? "text-red-500 hover:text-red-600" : "text-gray-600 hover:text-red-500"}`}
+                >
+                    <Heart className={`h-6 w-6 ${isLiked ? "fill-current" : ""}`} />
+                    <span className="font-semibold">{likesCount}</span>
+                    <span>{likesCount === 1 ? "Like" : "Likes"}</span>
+                </Button>
+            </div>
 
             {/* Action Buttons */}
             {check?._id === post?.author && (

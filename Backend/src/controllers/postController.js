@@ -3,23 +3,25 @@ import Post from "../models/post.js";
 export const createPost = async (req, res) => {
     try {
         // console.log(req.user);
-        const { title, content, tags } = req.body;
+        const { content, tags } = req.body;
 
         const author = req.user.userId;
-        if (!title || !content) {
-            return res.status(400).json({ message: "Title and content are required." });
+        if (!content) {
+            return res.status(400).json({ message: "Content is required." });
         }
         if (!author) {
             return res.status(400).json({ error: 'Author information is missing' });
         }
 
-        const image = req.file ? `/uploads/${req.file.filename}` : null;
+        const filePath = req.file ? `/uploads/${req.file.filename}` : null;
+        const isVideo = req.file && req.file.mimetype.startsWith('video/');
+        
         const newPost = new Post({
-            title,
             content,
             author,
-            tags, 
-            image, 
+            tags,
+            image: isVideo ? null : filePath,
+            video: isVideo ? filePath : null,
         });
 
         const savedPost = await newPost.save();
@@ -35,7 +37,7 @@ export const createPost = async (req, res) => {
 export const updatePost = async (req, res) => {
     try {
         const { postId } = req.params;
-        const { title, content, tags, image } = req.body;
+        const { content, tags, image } = req.body;
         const userId = req.user.userId;
 
         const post = await Post.findById(postId);
@@ -48,7 +50,6 @@ export const updatePost = async (req, res) => {
             return res.status(403).json({ message: "You are not authorized to update this post." });
         }
 
-        post.title = title || post.title;
         post.content = content || post.content;
         post.tags = tags || post.tags;
         post.image = image || post.image;
@@ -70,7 +71,6 @@ export const deletePost = async (req, res) => {
 
         const post = await Post.findById(postId);
         console.log('hey this is post = ' + post);
-        
 
         if (!post) {
             return res.status(404).json({ message: "Post not found." });
@@ -104,8 +104,7 @@ export const getTags = async (req, res) => {
         // console.log("🚀 ~ tagsPost:", tagsPost);
 
          // Extract tags from all posts and flatten the array
-        
-        const allTags = tagsPost.reduce((acc, post) =>{ 
+        const allTags = tagsPost.reduce((acc, post) =>{
             return [...acc, ...(JSON.parse(post.tags) || [])]}, []);
 
         const uniqueTags = [...new Set(allTags)];
@@ -149,12 +148,23 @@ export const getMyPosts = async (req, res) => {
     }
 };
 
+export const getPostsByUserId = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const posts = await Post.find({ author: userId }).sort({ date: -1 });
+        res.status(200).json(posts);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Failed to fetch user posts.", error: error.message });
+    }
+};
+
 // Get a single post
 export const getPost = async (req, res) => {
     try {
         const { postId } = req.params;
         const post = await Post.findById(postId);
-        
+
         if (!post) {
             return res.status(404).json({ message: "Post not found." });
         }

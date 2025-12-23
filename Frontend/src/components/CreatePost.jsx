@@ -7,38 +7,62 @@ import axios from "axios"
 
 const CreatePost = ({ username, onPostCreated }) => {
     const [isPostModalOpen, setIsPostModalOpen] = useState(false)
-    const [title, setTitle] = useState("")
     const [content, setContent] = useState("")
     const [image, setImage] = useState(null)
     const [imagePreview, setImagePreview] = useState(null)
+    const [video, setVideo] = useState(null)
+    const [videoPreview, setVideoPreview] = useState(null)
     const [isLoading, setIsLoading] = useState(false)
-    const fileInputRef = useRef(null)
+    const imageInputRef = useRef(null)
+    const videoInputRef = useRef(null)
 
     const handleImageUpload = (e) => {
         const file = e.target.files[0]
         if (file) {
             setImage(file)
             setImagePreview(URL.createObjectURL(file))
+            // Clear video if image is selected
+            setVideo(null)
+            setVideoPreview(null)
+        }
+    }
+
+    const handleVideoUpload = (e) => {
+        const file = e.target.files[0]
+        if (file) {
+            setVideo(file)
+            setVideoPreview(URL.createObjectURL(file))
+            // Clear image if video is selected
+            setImage(null)
+            setImagePreview(null)
         }
     }
 
     const removeImage = () => {
         setImage(null)
         setImagePreview(null)
-        if (fileInputRef.current) {
-            fileInputRef.current.value = ""
+        if (imageInputRef.current) {
+            imageInputRef.current.value = ""
+        }
+    }
+
+    const removeVideo = () => {
+        setVideo(null)
+        setVideoPreview(null)
+        if (videoInputRef.current) {
+            videoInputRef.current.value = ""
         }
     }
 
     const handleSubmit = async () => {
-        if (!content.trim() && !image) return
+        if (!content.trim() && !image && !video) return
 
         setIsLoading(true)
 
         const formData = new FormData()
-        formData.append("title", title || "Untitled Post")
         formData.append("content", content)
         if (image) formData.append("image", image)
+        if (video) formData.append("image", video)
         formData.append("tags", JSON.stringify([]))
 
         try {
@@ -56,13 +80,13 @@ const CreatePost = ({ username, onPostCreated }) => {
             console.log("Post created successfully!", response.data)
 
             // Reset form
-            setTitle("")
             setContent("")
             setImage(null)
             setImagePreview(null)
+            setVideo(null)
+            setVideoPreview(null)
             setIsPostModalOpen(false)
 
-            // Callback to refresh posts if provided
             if (onPostCreated) onPostCreated()
         } catch (error) {
             console.error("Post submission error:", error.response?.data || error.message)
@@ -73,10 +97,11 @@ const CreatePost = ({ username, onPostCreated }) => {
 
     const handleCloseModal = () => {
         setIsPostModalOpen(false)
-        setTitle("")
         setContent("")
         setImage(null)
         setImagePreview(null)
+        setVideo(null)
+        setVideoPreview(null)
     }
 
     return (
@@ -98,23 +123,23 @@ const CreatePost = ({ username, onPostCreated }) => {
                             What's on your mind, {username}?
                         </button>
                     </div>
-                    <div className="flex items-center gap-2 mt-4 pt-4 border-t">
-                        <Button variant="ghost" className="flex-1 gap-2 hover:bg-red-50 hover:text-red-600 transition-all">
+                    {/* <div className="flex items-center gap-2 mt-4 pt-4 border-t"> */}
+                        {/* <Button variant="ghost" className="flex-1 gap-2 hover:bg-red-50 hover:text-red-600 transition-all">
                             <Video className="h-5 w-5 text-red-500" />
                             <span>Video</span>
                         </Button>
                         <Button variant="ghost" className="flex-1 gap-2 hover:bg-green-50 hover:text-green-600 transition-all">
                             <ImageIcon className="h-5 w-5 text-green-500" />
                             <span>Photo</span>
-                        </Button>
-                        <Button
+                        </Button> */}
+                        {/* <Button
                             variant="ghost"
                             className="flex-1 gap-2 hover:bg-yellow-50 hover:text-yellow-600 transition-all"
                         >
                             <Smile className="h-5 w-5 text-yellow-500" />
                             <span>Feeling</span>
-                        </Button>
-                    </div>
+                        </Button> */}
+                    {/* </div> */}
                 </CardContent>
             </Card>
 
@@ -149,15 +174,6 @@ const CreatePost = ({ username, onPostCreated }) => {
                                 </div>
                             </div>
 
-                            {/* Title Input */}
-                            <input
-                                type="text"
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                                placeholder="Post title (optional)"
-                                className="w-full p-3 mb-2 text-lg border-b border-gray-200 focus:outline-none focus:border-blue-500 text-gray-800 placeholder-gray-400"
-                            />
-
                             {/* Content Textarea */}
                             <textarea
                                 value={content}
@@ -186,27 +202,61 @@ const CreatePost = ({ username, onPostCreated }) => {
                                 </div>
                             )}
 
+                            {/* Video Preview */}
+                            {videoPreview && (
+                                <div className="relative mt-3 rounded-xl overflow-hidden">
+                                    <video
+                                        src={videoPreview}
+                                        controls
+                                        className="w-full max-h-[200px] object-cover rounded-xl"
+                                    />
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={removeVideo}
+                                        className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full"
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            )}
+
                             {/* Add to post section */}
                             <div className="border border-gray-200 rounded-xl p-4 mt-4">
                                 <p className="text-sm font-semibold text-gray-800 mb-3">Add to your post</p>
                                 <div className="flex items-center gap-2">
+                                    {/* Image Upload Input */}
                                     <input
                                         type="file"
-                                        accept="image/*"
+                                        accept="image/jpeg,image/jpg,image/png,image/gif"
                                         onChange={handleImageUpload}
-                                        ref={fileInputRef}
+                                        ref={imageInputRef}
                                         className="hidden"
                                         id="image-upload"
+                                    />
+                                    {/* Video Upload Input */}
+                                    <input
+                                        type="file"
+                                        accept="video/mp4,video/mov,video/avi,video/mkv,video/webm"
+                                        onChange={handleVideoUpload}
+                                        ref={videoInputRef}
+                                        className="hidden"
+                                        id="video-upload"
                                     />
                                     <Button
                                         variant="ghost"
                                         size="icon"
                                         className="hover:bg-green-50 rounded-full"
-                                        onClick={() => fileInputRef.current?.click()}
+                                        onClick={() => imageInputRef.current?.click()}
                                     >
                                         <ImageIcon className="h-6 w-6 text-green-500" />
                                     </Button>
-                                    <Button variant="ghost" size="icon" className="hover:bg-red-50 rounded-full">
+                                    <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="hover:bg-red-50 rounded-full"
+                                        onClick={() => videoInputRef.current?.click()}
+                                    >
                                         <Video className="h-6 w-6 text-red-500" />
                                     </Button>
                                     <Button variant="ghost" size="icon" className="hover:bg-yellow-50 rounded-full">
@@ -221,7 +271,7 @@ const CreatePost = ({ username, onPostCreated }) => {
                             <Button
                                 onClick={handleSubmit}
                                 className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 rounded-xl shadow-lg transition-all"
-                                disabled={(!content.trim() && !image) || isLoading}
+                                disabled={(!content.trim() && !image && !video) || isLoading}
                             >
                                 {isLoading ? "Posting..." : "Post"}
                             </Button>

@@ -7,11 +7,11 @@ import {
     getUser,
     getUseById
 } from '../controllers/userController.js';
-import { createPost, updatePost, deletePost , getAllPosts ,getPost , getPostsByAuthor, getMyPosts ,getTags ,getPostsByTag  } from '../controllers/postController.js';
+import { createPost, updatePost, deletePost , getAllPosts ,getPost , getPostsByAuthor, getMyPosts ,getTags ,getPostsByTag, getPostsByUserId  } from '../controllers/postController.js';
 import { isAuthenticated } from '../middleware/auth.js'; 
 import { upload } from '../middleware/uploadMiddleware.js'; 
 import { createComment, deleteComment, getCommentByPost, updateComment } from '../controllers/commentController.js';
-import { likePost } from '../controllers/likesController.js';
+import { likePost, getLikesCount, checkUserLiked } from '../controllers/likesController.js';
 
 const router = express.Router();
 
@@ -33,7 +33,11 @@ router.get('/protected', isAuthenticated, (req, res) => {
 router.post('/createPost', isAuthenticated, upload.single("image"), createPost);
 router.put('/updatePost/:postId', isAuthenticated, upload.single('image'), updatePost);
 router.delete("/deletePost/:postId", isAuthenticated, deletePost);
-router.delete("/likePost/", isAuthenticated, likePost);
+
+// Route for likes
+router.post("/likePost/:postId", isAuthenticated, likePost);
+router.get("/likesCount/:postId", getLikesCount);
+router.get("/checkLiked/:postId", isAuthenticated, checkUserLiked);
 
 // Route for find posts
 router.get('/getMyPosts',isAuthenticated, getMyPosts);
@@ -42,6 +46,7 @@ router.get('/getPostsByTag', getPostsByTag);
 router.get('/getPost/:postId', getPost);
 router.get('/allPosts', getAllPosts);
 router.get('/getPostsByAuthor',isAuthenticated, getPostsByAuthor);
+router.get('/getPostsByUserId/:userId', getPostsByUserId);
 
 // Route for comments
 router.post('/comment', isAuthenticated, createComment);

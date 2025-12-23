@@ -1,17 +1,31 @@
-import { Globe, Instagram, Twitter } from "lucide-react"
+"use client"
+
+import { Globe, Instagram, Twitter, MapPin, Link2, Settings, Grid3X3, Bookmark, Heart } from "lucide-react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import axios from "axios"
 import CreatePost from "@/components/CreatePost"
+import PostCard from "@/components/PostCard"
+import { Toaster } from "sonner"
 
 const Profile = () => {
-    const [data, setData] = useState([])
+    const [data, setData] = useState({})
     const [posts, setPosts] = useState([])
+    const [activeTab, setActiveTab] = useState("posts")
     const navigate = useNavigate()
+
+    const fetchPosts = async () => {
+        try {
+            const res = await axios.get("http://localhost:8000/api/sma/getMyPosts", { withCredentials: true })
+            setPosts(res.data)
+        } catch (err) {
+            console.error(err)
+        }
+    }
 
     useEffect(() => {
         const getUser = async () => {
@@ -23,13 +37,8 @@ const Profile = () => {
             }
         }
 
-        const getMyPosts = async () => {
-            const res = await axios.get("http://localhost:8000/api/sma/getMyPosts", { withCredentials: true })
-            setPosts(res.data)
-        }
-
         getUser()
-        getMyPosts()
+        fetchPosts()
     }, [])
 
     const handleCardClick = (postId) => {
@@ -38,145 +47,181 @@ const Profile = () => {
 
     return (
         <>
-            <section className="flex flex-col items-center justify-start min-h-screen pt-6 bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
-                {/* Profile Header */}
-                <div className="text-center max-w-2xl mb-8">
-                    <div className="relative inline-block">
-                        <Avatar className="w-32 h-32 mx-auto ring-4 ring-white shadow-xl">
-                            <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-                            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-3xl font-bold">
-                                {data.username?.[0]?.toUpperCase() || "U"}
-                            </AvatarFallback>
-                        </Avatar>
-                        <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full border-4 border-white shadow-lg"></div>
-                    </div>
-                    <h1 className="mt-6 text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                        {data.username}
-                    </h1>
-                    <p className="text-gray-500 text-lg">@{data.username}</p>
-                    <p className="mt-4 text-gray-600 leading-relaxed px-4">
-                        Welcome to My Page, a space where ideas, experiences, and insights come to life. Whether you're here for
-                        inspiration, knowledge, or just a good read, you'll find something that resonates with you.
-                    </p>
-                    <div className="flex justify-center gap-2 mt-6">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="hover:bg-blue-100 hover:text-blue-600 transition-all rounded-full"
-                        >
-                            <Globe className="h-5 w-5" />
-                            <span className="sr-only">Website</span>
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="hover:bg-pink-100 hover:text-pink-600 transition-all rounded-full"
-                        >
-                            <Instagram className="h-5 w-5" />
-                            <span className="sr-only">Instagram</span>
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="hover:bg-blue-100 hover:text-blue-400 transition-all rounded-full"
-                        >
-                            <Twitter className="h-5 w-5" />
-                            <span className="sr-only">Twitter</span>
-                        </Button>
-                    </div>
+            <section className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+                {/* Cover Image */}
+                <div className="relative h-48 md:h-64 bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500">
+                    <div className="absolute inset-0 bg-black/10" />
+                    <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTRzLTItMi00LTJjMCAwLTItMi0yLTRzMi00IDItNCAyIDIgNCAyYzAgMCAyIDIgMiA0cy0yIDQtMiA0LTIgMi00IDJjMCAwLTItMi0yLTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30" />
                 </div>
 
-                <div className="container py-8 max-w-6xl">
-                    {/* Post Creation Section */}
-                    <CreatePost username={data.username} />
-
-                    <div className="grid gap-8">
-                        {/* Featured Article */}
-                        {posts[0] && (
-                            <Card
-                                className="grid md:grid-cols-2 gap-6 p-0 overflow-hidden cursor-pointer hover:shadow-2xl transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm transform hover:-translate-y-1"
-                                onClick={() => handleCardClick(posts[0]._id)}
-                            >
-                                <div className="relative aspect-[4/3] md:aspect-auto overflow-hidden">
-                                    <img
-                                        src={`http://localhost:8000${posts[0].image}`}
-                                        alt={posts[0].title}
-                                        className="absolute inset-0 w-full h-full object-cover hover:scale-110 transition-transform duration-500"
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+                {/* Profile Header */}
+                <div className="relative max-w-4xl mx-auto px-4">
+                    <Card className="relative -mt-20 border-0 shadow-xl bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden">
+                        <div className="p-6 md:p-8">
+                            {/* Avatar & Basic Info */}
+                            <div className="flex flex-col md:flex-row items-center md:items-end gap-6">
+                                <div className="relative -mt-20 md:-mt-24">
+                                    <Avatar className="w-32 h-32 md:w-40 md:h-40 ring-4 ring-white shadow-2xl">
+                                        <AvatarImage src="https://github.com/shadcn.png" alt={data.username} />
+                                        <AvatarFallback className="bg-gradient-to-br from-violet-500 to-purple-600 text-white text-4xl font-bold">
+                                            {data.username?.[0]?.toUpperCase() || "U"}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div className="absolute bottom-2 right-2 w-6 h-6 bg-green-500 rounded-full border-4 border-white" />
                                 </div>
-                                <CardContent className="p-6">
-                                    <div className="flex gap-2 mb-3 flex-wrap">
-                                        {posts[0].tags &&
-                                            posts[0].tags[0] &&
-                                            JSON.parse(posts[0].tags[0]).map((tag, index) => (
-                                                <Badge key={index} className="bg-gradient-to-r from-blue-500 to-purple-600 text-white border-0">
-                                                    {tag}
-                                                </Badge>
-                                            ))}
-                                    </div>
-                                    <h2 className="text-3xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                                        {posts[0].title}
-                                    </h2>
-                                    <p className="text-sm text-gray-500 mb-4">
-                                        {posts[0].date
-                                            ? new Date(posts[0].date).toLocaleDateString("en-US", {
-                                                year: "numeric",
-                                                month: "long",
-                                                day: "numeric",
-                                            })
-                                            : "Date not available"}
-                                    </p>
-                                    <p className="text-gray-600 leading-relaxed">{posts[0].content}</p>
-                                </CardContent>
-                            </Card>
-                        )}
 
-                        {/* Regular Articles */}
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {posts.slice(1).map((post) => (
-                                <Card
-                                    key={post._id}
-                                    className="overflow-hidden cursor-pointer hover:shadow-2xl transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm transform hover:-translate-y-1"
-                                    onClick={() => handleCardClick(post._id)}
-                                >
-                                    <div className="relative aspect-[3/2] overflow-hidden">
-                                        <img
-                                            src={`http://localhost:8000${post.image}`}
-                                            alt={post.title}
-                                            className="absolute inset-0 w-full h-full object-cover hover:scale-110 transition-transform duration-500"
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+                                <div className="flex-1 text-center md:text-left">
+                                    <div className="flex flex-col md:flex-row md:items-center gap-3">
+                                        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+                                            {data.username}
+                                        </h1>
+                                        <span className="text-gray-500 font-medium">@{data.username}</span>
                                     </div>
-                                    <CardContent className="p-6">
-                                        <div className="flex gap-2 mb-3 flex-wrap">
-                                            {post.tags &&
-                                                post.tags[0] &&
-                                                JSON.parse(post.tags[0]).map((tag, index) => (
-                                                    <Badge
-                                                        key={index}
-                                                        className="bg-gradient-to-r from-blue-500 to-purple-600 text-white border-0"
-                                                    >
-                                                        {tag}
-                                                    </Badge>
-                                                ))}
-                                        </div>
-                                        <h3 className="text-xl font-bold mb-2 text-gray-800">{post.title}</h3>
-                                        <p className="text-sm text-gray-500 mb-4">
-                                            {new Date(post.date).toLocaleDateString("en-US", {
-                                                year: "numeric",
-                                                month: "long",
-                                                day: "numeric",
-                                            })}
-                                        </p>
-                                        <p className="text-gray-600 line-clamp-3 leading-relaxed">{post.content}</p>
-                                    </CardContent>
-                                </Card>
-                            ))}
+                                    <p className="mt-2 text-gray-600 max-w-lg">
+                                        Welcome to My Page, a space where ideas, experiences, and insights come to life. ✨
+                                    </p>
+                                    <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 mt-3 text-sm text-gray-500">
+                                        <span className="flex items-center gap-1">
+                                            <MapPin className="h-4 w-4" />
+                                            Earth
+                                        </span>
+                                        <span className="flex items-center gap-1">
+                                            <Link2 className="h-4 w-4" />
+                                            mywebsite.com
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-2">
+                                    <Button variant="outline" size="icon" className="rounded-full">
+                                        <Settings className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {/* Stats */}
+                            <div className="flex justify-center md:justify-start gap-8 mt-6 pt-6 border-t border-gray-100">
+                                <div className="text-center">
+                                    <div className="text-2xl font-bold text-gray-900">{posts.length}</div>
+                                    <div className="text-sm text-gray-500">Posts</div>
+                                </div>
+                                <div className="text-center">
+                                    <div className="text-2xl font-bold text-gray-900">1.2K</div>
+                                    <div className="text-sm text-gray-500">Followers</div>
+                                </div>
+                                <div className="text-center">
+                                    <div className="text-2xl font-bold text-gray-900">890</div>
+                                    <div className="text-sm text-gray-500">Following</div>
+                                </div>
+                            </div>
+
+                            {/* Social Links */}
+                            <div className="flex justify-center md:justify-start gap-2 mt-4">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-9 w-9 hover:bg-blue-50 hover:text-blue-600 transition-all rounded-full"
+                                >
+                                    <Globe className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-9 w-9 hover:bg-pink-50 hover:text-pink-600 transition-all rounded-full"
+                                >
+                                    <Instagram className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-9 w-9 hover:bg-blue-50 hover:text-blue-400 transition-all rounded-full"
+                                >
+                                    <Twitter className="h-4 w-4" />
+                                </Button>
+                            </div>
                         </div>
-                    </div>
+                    </Card>
+                </div>
+
+                {/* Content Tabs */}
+                <div className="max-w-4xl mx-auto px-4 py-6">
+                    <Tabs defaultValue="posts" className="w-full" onValueChange={setActiveTab}>
+                        <TabsList className="w-full justify-start bg-white/80 backdrop-blur-sm rounded-xl p-1 shadow-sm mb-6">
+                            <TabsTrigger 
+                                value="posts" 
+                                className="flex-1 md:flex-none gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-500 data-[state=active]:to-purple-500 data-[state=active]:text-white rounded-lg"
+                            >
+                                <Grid3X3 className="h-4 w-4" />
+                                Posts
+                            </TabsTrigger>
+                            <TabsTrigger 
+                                value="saved" 
+                                className="flex-1 md:flex-none gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-500 data-[state=active]:to-purple-500 data-[state=active]:text-white rounded-lg"
+                            >
+                                <Bookmark className="h-4 w-4" />
+                                Saved
+                            </TabsTrigger>
+                            <TabsTrigger 
+                                value="liked" 
+                                className="flex-1 md:flex-none gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-500 data-[state=active]:to-purple-500 data-[state=active]:text-white rounded-lg"
+                            >
+                                <Heart className="h-4 w-4" />
+                                Liked
+                            </TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="posts" className="mt-0">
+                            {/* Post Creation */}
+                            <div className="mb-6">
+                                <CreatePost username={data.username} onPostCreated={fetchPosts} />
+                            </div>
+
+                            {/* Posts Feed */}
+                            <div className="flex flex-col gap-4">
+                                {posts.length > 0 ? (
+                                    posts.map((post) => (
+                                        <PostCard 
+                                            key={post._id} 
+                                            post={post} 
+                                            username={data.username} 
+                                            onClick={() => handleCardClick(post._id)} 
+                                        />
+                                    ))
+                                ) : (
+                                    <Card className="p-12 text-center border-0 bg-white/80 backdrop-blur-sm">
+                                        <div className="text-gray-400 mb-2">
+                                            <Grid3X3 className="h-12 w-12 mx-auto opacity-50" />
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-gray-700">No posts yet</h3>
+                                        <p className="text-gray-500 text-sm mt-1">Share your first post with the world!</p>
+                                    </Card>
+                                )}
+                            </div>
+                        </TabsContent>
+
+                        <TabsContent value="saved" className="mt-0">
+                            <Card className="p-12 text-center border-0 bg-white/80 backdrop-blur-sm">
+                                <div className="text-gray-400 mb-2">
+                                    <Bookmark className="h-12 w-12 mx-auto opacity-50" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-gray-700">No saved posts</h3>
+                                <p className="text-gray-500 text-sm mt-1">Posts you save will appear here</p>
+                            </Card>
+                        </TabsContent>
+
+                        <TabsContent value="liked" className="mt-0">
+                            <Card className="p-12 text-center border-0 bg-white/80 backdrop-blur-sm">
+                                <div className="text-gray-400 mb-2">
+                                    <Heart className="h-12 w-12 mx-auto opacity-50" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-gray-700">No liked posts</h3>
+                                <p className="text-gray-500 text-sm mt-1">Posts you like will appear here</p>
+                            </Card>
+                        </TabsContent>
+                    </Tabs>
                 </div>
             </section>
+            <Toaster position="top-right" richColors />
         </>
     )
 }
