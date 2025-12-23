@@ -28,7 +28,7 @@ export default function SearchBar() {
                 const filtered = response.data.filter(user =>
                     user.username.toLowerCase().includes(searchQuery.toLowerCase())
                 )
-                setSearchResults(filtered.slice(0, 5)) // Limit to 5 results
+                setSearchResults(filtered.slice(0, 5))
             } catch (error) {
                 console.error('Error searching users:', error)
                 setSearchResults([])
