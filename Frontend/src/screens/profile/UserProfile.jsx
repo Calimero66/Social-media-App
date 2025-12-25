@@ -1,6 +1,6 @@
 "use client"
 
-import { Globe, Instagram, Twitter, MapPin, Link2, ArrowLeft, Grid3X3, Calendar } from "lucide-react"
+import { Globe, Instagram, Twitter, MapPin, Link2, ArrowLeft, Grid3X3, Calendar, MessageCircle } from "lucide-react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -174,6 +174,14 @@ const UserProfile = () => {
                                     }`}
                                 >
                                     {isLoadingFollow ? 'Loading...' : (isFollowing ? 'Following' : 'Follow')}
+                                </Button>
+                                <Button 
+                                    onClick={() => navigate(`/chat/${userId}`)}
+                                    variant="outline"
+                                    className="rounded-full px-4"
+                                >
+                                    <MessageCircle className="h-4 w-4 mr-2" />
+                                    Message
                                 </Button>
                             </div>
                         </div>

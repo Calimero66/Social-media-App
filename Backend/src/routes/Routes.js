@@ -18,6 +18,15 @@ import { likePost, getLikesCount, checkUserLiked } from '../controllers/likesCon
 import { followUser, unfollowUser, checkFollowing, getFollowers, getFollowing, getFollowStats } from '../controllers/followController.js';
 import { getNotifications, getUnreadCount, markAsRead, markAllAsRead, deleteNotification } from '../controllers/notificationController.js';
 import { savePost, unsavePost, getSavedPosts, checkSaved } from '../controllers/savedPostController.js';
+import { 
+    getOrCreateConversation, 
+    getConversations, 
+    getMessages, 
+    sendMessage, 
+    markMessagesAsRead, 
+    getUnreadMessagesCount,
+    deleteMessage 
+} from '../controllers/chatController.js';
 
 const router = express.Router();
 
@@ -82,6 +91,15 @@ router.post('/savePost/:postId', isAuthenticated, savePost);
 router.post('/unsavePost/:postId', isAuthenticated, unsavePost);
 router.get('/savedPosts', isAuthenticated, getSavedPosts);
 router.get('/checkSaved/:postId', isAuthenticated, checkSaved);
+
+// Route for chat/messages
+router.get('/conversations', isAuthenticated, getConversations);
+router.get('/conversation/:recipientId', isAuthenticated, getOrCreateConversation);
+router.get('/messages/unread/count', isAuthenticated, getUnreadMessagesCount);
+router.get('/messages/:conversationId', isAuthenticated, getMessages);
+router.post('/messages/:conversationId', isAuthenticated, sendMessage);
+router.put('/messages/:conversationId/read', isAuthenticated, markMessagesAsRead);
+router.delete('/messages/:messageId', isAuthenticated, deleteMessage);
 
 // Authentication check
 router.get('/isAuthenticated', isAuthenticated, protectedRoute);

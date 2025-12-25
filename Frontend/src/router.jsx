@@ -8,6 +8,8 @@ import Profile from "./screens/profile/Profile";
 import UserProfile from "./screens/profile/UserProfile";
 import ProtLayout from "./components/layout/protLayout";
 import EditPost from "./screens/EditPost";
+import ChatList from "./screens/ChatList";
+import ChatRoom from "./screens/ChatRoom";
 
 const router = createBrowserRouter([
     {
@@ -32,7 +34,8 @@ const router = createBrowserRouter([
         children: [
             { path: "/profile", element: <Profile />, index: true },
             { path: "/edit-post/:postId", element: <EditPost/>},
-
+            { path: "/chat", element: <ChatList /> },
+            { path: "/chat/:recipientId", element: <ChatRoom /> },
         ],
 
     },

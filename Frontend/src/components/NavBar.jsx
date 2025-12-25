@@ -4,7 +4,7 @@ import axios from "axios"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import SearchBtn from "./SearchBtn"
-import { Bell, UserPlus, Check } from "lucide-react"
+import { Bell, UserPlus, Check, MessageCircle } from "lucide-react"
 
 const NavBar = () => {
     const navigate = useNavigate()
@@ -15,6 +15,7 @@ const NavBar = () => {
     const [isNotificationOpen, setIsNotificationOpen] = useState(false)
     const [notifications, setNotifications] = useState([])
     const [unreadCount, setUnreadCount] = useState(0)
+    const [unreadMessages, setUnreadMessages] = useState(0)
 
     const [data, setData] = useState([])
     const handleLogout = async () => {
@@ -47,6 +48,15 @@ const NavBar = () => {
         try {
             const response = await axios.get("http://localhost:8000/api/sma/notifications/unread-count", { withCredentials: true })
             setUnreadCount(response.data.unreadCount)
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
+    const fetchUnreadMessages = async () => {
+        try {
+            const response = await axios.get("http://localhost:8000/api/sma/messages/unread/count", { withCredentials: true })
+            setUnreadMessages(response.data.unreadCount)
         } catch (err) {
             console.error(err)
         }
@@ -121,6 +131,7 @@ const NavBar = () => {
                 // Fetch notifications when authenticated
                 fetchNotifications()
                 fetchUnreadCount()
+                fetchUnreadMessages()
             } catch (err) {
                 console.error(err)
                 setLoading(false)
@@ -129,11 +140,12 @@ const NavBar = () => {
         fetchProfile()
     }, [])
 
-    // Poll for new notifications every 30 seconds
+    // Poll for new notifications and messages every 30 seconds
     useEffect(() => {
         if (profile) {
             const interval = setInterval(() => {
                 fetchUnreadCount()
+                fetchUnreadMessages()
             }, 30000)
             return () => clearInterval(interval)
         }
@@ -183,6 +195,19 @@ const NavBar = () => {
                 {profile ? (
                     <div className="flex items-center gap-4">
                         <SearchBtn />
+
+                        {/* Chat Button */}
+                        <Link
+                            to="/chat"
+                            className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-all"
+                        >
+                            <MessageCircle className="h-5 w-5" />
+                            {unreadMessages > 0 && (
+                                <span className="absolute -top-0.5 -right-0.5 h-5 w-5 flex items-center justify-center text-xs font-bold text-white bg-blue-500 rounded-full">
+                                    {unreadMessages > 9 ? '9+' : unreadMessages}
+                                </span>
+                            )}
+                        </Link>
 
                         {/* Notification Bell */}
                         <div className="relative">
