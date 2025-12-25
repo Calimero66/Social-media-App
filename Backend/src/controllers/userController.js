@@ -92,7 +92,7 @@ export const getUser = async (req, res) => {
         // this can be used to get all the user data but we only need username and email
         // const user = await User.findById(req.user.userId)
         // res.status(200).json(user); 
-        const user = await User.findById(req.user.userId).select("_id username email followers following").populate('followers', 'username').populate('following', 'username');
+        const user = await User.findById(req.user.userId).select("_id username email bio profileImage instagram twitter website followers following").populate('followers', 'username').populate('following', 'username');
         res.status(200).json(user);
     } catch (error) {
         console.error(error);
@@ -103,7 +103,7 @@ export const getUser = async (req, res) => {
 export const getUseById = async (req, res) => {
     try {
         const { userId } = req.params ;
-        const user = await User.findById(userId).select("_id username email followers following").populate('followers', 'username').populate('following', 'username');
+        const user = await User.findById(userId).select("_id username email bio profileImage instagram twitter website followers following").populate('followers', 'username').populate('following', 'username');
         res.status(200).json(user);
     } catch (error) {
         res.status(500).json({ error: "Failed to get user" })
@@ -122,7 +122,7 @@ export const getAllUsers = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
     try {
-        const { username, email, bio } = req.body;
+        const { username, email, bio, instagram, twitter, website } = req.body;
         const userId = req.user.userId;
 
         // Validate input
@@ -158,14 +158,40 @@ export const updateProfile = async (req, res) => {
             {
                 username: username.trim(),
                 email: email ? email.trim() : undefined,
-                bio: bio || ""
+                bio: bio || "",
+                instagram: instagram || "",
+                twitter: twitter || "",
+                website: website || ""
             },
             { new: true }
-        ).select("_id username email bio followers following").populate('followers', 'username').populate('following', 'username');
+        ).select("_id username email bio profileImage instagram twitter website followers following").populate('followers', 'username').populate('following', 'username');
 
         res.status(200).json(updatedUser);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Failed to update profile" });
+    }
+};
+
+export const updateProfileImage = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+
+        if (!req.file) {
+            return res.status(400).json({ message: "No image file provided" });
+        }
+
+        const profileImage = req.file.filename;
+
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { profileImage },
+            { new: true }
+        ).select("_id username email bio profileImage instagram twitter website followers following").populate('followers', 'username').populate('following', 'username');
+
+        res.status(200).json(updatedUser);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Failed to update profile image" });
     }
 };

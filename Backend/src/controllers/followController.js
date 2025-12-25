@@ -1,4 +1,5 @@
 import User from "../models/user.js";
+import { createNotification } from "./notificationController.js";
 
 export const followUser = async (req, res) => {
     try {
@@ -29,6 +30,14 @@ export const followUser = async (req, res) => {
         // Add to followers list
         userToFollow.followers.push(currentUserId);
         await userToFollow.save();
+
+        // Create notification for the followed user
+        await createNotification(
+            userId,
+            currentUserId,
+            'follow',
+            `${currentUser.username} started following you`
+        );
 
         res.status(200).json({ 
             message: "User followed successfully.", 

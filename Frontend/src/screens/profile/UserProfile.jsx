@@ -131,7 +131,10 @@ const UserProfile = () => {
                         <div className="flex flex-col md:flex-row items-center md:items-end gap-6">
                             <div className="relative -mt-20 md:-mt-24">
                                 <Avatar className="w-32 h-32 md:w-40 md:h-40 ring-4 ring-white shadow-2xl">
-                                    <AvatarImage src="https://github.com/shadcn.png" alt={user.username} />
+                                    <AvatarImage 
+                                        src={user.profileImage ? `http://localhost:8000/uploads/${user.profileImage}` : undefined} 
+                                        alt={user.username} 
+                                    />
                                     <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-4xl font-bold">
                                         {user.username?.[0]?.toUpperCase() || "U"}
                                     </AvatarFallback>
@@ -146,7 +149,7 @@ const UserProfile = () => {
                                     <span className="text-gray-500 font-medium">@{user.username}</span>
                                 </div>
                                 <p className="mt-2 text-gray-600 max-w-lg">
-                                    Welcome to {user.username}'s profile. Check out their posts and content! ✨
+                                    {user.bio || `Welcome to ${user.username}'s profile. Check out their posts and content! ✨`}
                                 </p>
                                 <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 mt-3 text-sm text-gray-500">
                                     <span className="flex items-center gap-1">
@@ -193,27 +196,51 @@ const UserProfile = () => {
 
                         {/* Social Links */}
                         <div className="flex justify-center md:justify-start gap-2 mt-4">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-9 w-9 hover:bg-blue-50 hover:text-blue-600 transition-all rounded-full"
-                            >
-                                <Globe className="h-4 w-4" />
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-9 w-9 hover:bg-pink-50 hover:text-pink-600 transition-all rounded-full"
-                            >
-                                <Instagram className="h-4 w-4" />
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-9 w-9 hover:bg-blue-50 hover:text-blue-400 transition-all rounded-full"
-                            >
-                                <Twitter className="h-4 w-4" />
-                            </Button>
+                            {user.website && (
+                                <a
+                                    href={user.website.startsWith('http') ? user.website : `https://${user.website}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-9 w-9 hover:bg-blue-50 hover:text-blue-600 transition-all rounded-full"
+                                    >
+                                        <Globe className="h-4 w-4" />
+                                    </Button>
+                                </a>
+                            )}
+                            {user.instagram && (
+                                <a
+                                    href={user.instagram.startsWith('http') ? user.instagram : `https://${user.instagram}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-9 w-9 hover:bg-pink-50 hover:text-pink-600 transition-all rounded-full"
+                                    >
+                                        <Instagram className="h-4 w-4" />
+                                    </Button>
+                                </a>
+                            )}
+                            {user.twitter && (
+                                <a
+                                    href={user.twitter.startsWith('http') ? user.twitter : `https://${user.twitter}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-9 w-9 hover:bg-blue-50 hover:text-blue-400 transition-all rounded-full"
+                                    >
+                                        <Twitter className="h-4 w-4" />
+                                    </Button>
+                                </a>
+                            )}
                         </div>
                     </div>
                 </Card>

@@ -15,6 +15,26 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    profileImage: {
+        type: String,
+        default: ""
+    },
+    bio: {
+        type: String,
+        default: ""
+    },
+    instagram: {
+        type: String,
+        default: ""
+    },
+    twitter: {
+        type: String,
+        default: ""
+    },
+    website: {
+        type: String,
+        default: ""
+    },
     followers: [
         {
             type: mongoose.Schema.Types.ObjectId,
@@ -25,6 +45,12 @@ const userSchema = new mongoose.Schema({
         {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User'
+        }
+    ],
+    savedPosts: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Post'
         }
     ]
 }, { timestamps: true });

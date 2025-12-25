@@ -1,7 +1,7 @@
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { MessageCircle, MoreHorizontal, Calendar, Edit2, Trash2 } from "lucide-react"
+import { MessageCircle, MoreHorizontal, Calendar, Edit2, Trash2, Bookmark } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useNavigate } from "react-router-dom"
 import { useState, useRef, useEffect } from "react"
@@ -10,11 +10,13 @@ import { toast } from "sonner"
 import LikeButton from "./LikeButton"
 import PostDetailModal from "./PostDetailModal"
 
-const PostCard = ({ post, username, authorId, onClick, currentUserId, onPostDeleted }) => {
+const PostCard = ({ post, username, authorId, onClick, currentUserId, onPostDeleted, onPostUnsaved }) => {
     const navigate = useNavigate()
     const [showDetailModal, setShowDetailModal] = useState(false)
     const [showMenu, setShowMenu] = useState(false)
     const [currentUser, setCurrentUser] = useState(null)
+    const [isSaved, setIsSaved] = useState(false)
+    const [isSaving, setIsSaving] = useState(false)
     const menuRef = useRef(null)
 
     useEffect(() => {
@@ -22,6 +24,21 @@ const PostCard = ({ post, username, authorId, onClick, currentUserId, onPostDele
             setCurrentUser(currentUserId)
         }
     }, [currentUserId])
+
+    useEffect(() => {
+        const checkSavedStatus = async () => {
+            try {
+                const response = await axios.get(
+                    `http://localhost:8000/api/sma/checkSaved/${post._id}`,
+                    { withCredentials: true }
+                )
+                setIsSaved(response.data.saved)
+            } catch (err) {
+                console.error(err)
+            }
+        }
+        checkSavedStatus()
+    }, [post._id])
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -66,6 +83,36 @@ const PostCard = ({ post, username, authorId, onClick, currentUserId, onPostDele
     const handleEdit = () => {
         setShowMenu(false)
         navigate(`/edit-post/${post._id}`)
+    }
+
+    const handleSave = async () => {
+        if (isSaving) return
+        setIsSaving(true)
+        try {
+            if (isSaved) {
+                await axios.post(
+                    `http://localhost:8000/api/sma/unsavePost/${post._id}`,
+                    {},
+                    { withCredentials: true }
+                )
+                setIsSaved(false)
+                toast.success("Post removed from saved")
+                if (onPostUnsaved) onPostUnsaved()
+            } else {
+                await axios.post(
+                    `http://localhost:8000/api/sma/savePost/${post._id}`,
+                    {},
+                    { withCredentials: true }
+                )
+                setIsSaved(true)
+                toast.success("Post saved")
+            }
+        } catch (err) {
+            console.error(err)
+            toast.error("Failed to save post")
+        } finally {
+            setIsSaving(false)
+        }
     }
 
     return (
@@ -167,16 +214,28 @@ const PostCard = ({ post, username, authorId, onClick, currentUserId, onPostDele
             </CardContent>
 
             <CardFooter className="pt-0 border-t border-gray-50">
-                <div className="flex items-center gap-4 w-full pt-3" onClick={(e) => e.stopPropagation()}>
-                    <LikeButton postId={post._id} />
+                <div className="flex items-center justify-between w-full pt-3" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-4">
+                        <LikeButton postId={post._id} />
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 px-3 text-gray-500 hover:text-blue-600 hover:bg-blue-50 gap-1.5"
+                            onClick={() => setShowDetailModal(true)}
+                        >
+                            <MessageCircle className="h-4 w-4" />
+                            <span className="text-xs font-medium">Comment</span>
+                        </Button>
+                    </div>
                     <Button 
                         variant="ghost" 
                         size="sm" 
-                        className="h-8 px-3 text-gray-500 hover:text-blue-600 hover:bg-blue-50 gap-1.5"
-                        onClick={() => setShowDetailModal(true)}
+                        className={`h-8 px-3 gap-1.5 ${isSaved ? 'text-purple-600 hover:text-purple-700 hover:bg-purple-50' : 'text-gray-500 hover:text-purple-600 hover:bg-purple-50'}`}
+                        onClick={handleSave}
+                        disabled={isSaving}
                     >
-                        <MessageCircle className="h-4 w-4" />
-                        <span className="text-xs font-medium">Comment</span>
+                        <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+                        <span className="text-xs font-medium">{isSaved ? 'Saved' : 'Save'}</span>
                     </Button>
                 </div>
             </CardFooter>

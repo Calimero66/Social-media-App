@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { useState, useRef } from "react"
 import axios from "axios"
 
-const CreatePost = ({ username, onPostCreated }) => {
+const CreatePost = ({ username, profileImage, onPostCreated }) => {
     const [isPostModalOpen, setIsPostModalOpen] = useState(false)
     const [content, setContent] = useState("")
     const [image, setImage] = useState(null)
@@ -110,7 +110,10 @@ const CreatePost = ({ username, onPostCreated }) => {
                 <CardContent className="p-4">
                     <div className="flex items-center gap-3">
                         <Avatar className="w-12 h-12 ring-2 ring-blue-100">
-                            <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+                            <AvatarImage 
+                                src={profileImage ? `http://localhost:8000/uploads/${profileImage}` : undefined} 
+                                alt={username} 
+                            />
                             <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
                                 {username?.[0]?.toUpperCase() || "U"}
                             </AvatarFallback>
@@ -163,7 +166,10 @@ const CreatePost = ({ username, onPostCreated }) => {
                         <div className="p-4 max-h-[60vh] overflow-y-auto">
                             <div className="flex items-center gap-3 mb-4">
                                 <Avatar className="w-10 h-10 ring-2 ring-blue-100">
-                                    <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+                                    <AvatarImage 
+                                        src={profileImage ? `http://localhost:8000/uploads/${profileImage}` : undefined} 
+                                        alt={username} 
+                                    />
                                     <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
                                         {username?.[0]?.toUpperCase() || "U"}
                                     </AvatarFallback>

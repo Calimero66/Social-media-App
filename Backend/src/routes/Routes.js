@@ -7,6 +7,7 @@ import {
     getUser,
     getUseById,
     updateProfile,
+    updateProfileImage,
     getAllUsers
 } from '../controllers/userController.js';
 import { createPost, updatePost, deletePost , getAllPosts ,getPost , getPostsByAuthor, getMyPosts , getPostsByUserId, getLikedPosts  } from '../controllers/postController.js';
@@ -15,6 +16,8 @@ import { upload } from '../middleware/uploadMiddleware.js';
 import { createComment, deleteComment, getCommentByPost, updateComment } from '../controllers/commentController.js';
 import { likePost, getLikesCount, checkUserLiked } from '../controllers/likesController.js';
 import { followUser, unfollowUser, checkFollowing, getFollowers, getFollowing, getFollowStats } from '../controllers/followController.js';
+import { getNotifications, getUnreadCount, markAsRead, markAllAsRead, deleteNotification } from '../controllers/notificationController.js';
+import { savePost, unsavePost, getSavedPosts, checkSaved } from '../controllers/savedPostController.js';
 
 const router = express.Router();
 
@@ -25,6 +28,7 @@ router.post('/logout', logoutUser);
 router.get('/getUser', isAuthenticated, getUser);
 router.get('/getUseById/:userId', getUseById);
 router.put('/updateProfile', isAuthenticated, updateProfile);
+router.put('/updateProfileImage', isAuthenticated, upload.single('profileImage'), updateProfileImage);
 router.get('/allUsers', getAllUsers);
 
 
@@ -65,6 +69,19 @@ router.get('/checkFollowing/:userId', isAuthenticated, checkFollowing);
 router.get('/followers/:userId', getFollowers);
 router.get('/following/:userId', getFollowing);
 router.get('/followStats/:userId', getFollowStats);
+
+// Route for notifications
+router.get('/notifications', isAuthenticated, getNotifications);
+router.get('/notifications/unread-count', isAuthenticated, getUnreadCount);
+router.put('/notifications/:notificationId/read', isAuthenticated, markAsRead);
+router.put('/notifications/mark-all-read', isAuthenticated, markAllAsRead);
+router.delete('/notifications/:notificationId', isAuthenticated, deleteNotification);
+
+// Route for saved posts
+router.post('/savePost/:postId', isAuthenticated, savePost);
+router.post('/unsavePost/:postId', isAuthenticated, unsavePost);
+router.get('/savedPosts', isAuthenticated, getSavedPosts);
+router.get('/checkSaved/:postId', isAuthenticated, checkSaved);
 
 // Authentication check
 router.get('/isAuthenticated', isAuthenticated, protectedRoute);

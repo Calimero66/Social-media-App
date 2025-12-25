@@ -4,6 +4,7 @@ import axios from "axios"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import SearchBtn from "./SearchBtn"
+import { Bell, UserPlus, Check } from "lucide-react"
 
 const NavBar = () => {
     const navigate = useNavigate()
@@ -11,6 +12,9 @@ const NavBar = () => {
     const [profile, setProfile] = useState(false)
     const [loading, setLoading] = useState(true)
     const [isOpen, setIsOpen] = useState(false)
+    const [isNotificationOpen, setIsNotificationOpen] = useState(false)
+    const [notifications, setNotifications] = useState([])
+    const [unreadCount, setUnreadCount] = useState(0)
 
     const [data, setData] = useState([])
     const handleLogout = async () => {
@@ -28,6 +32,68 @@ const NavBar = () => {
         } catch (err) {
             console.error(err)
         }
+    }
+
+    const fetchNotifications = async () => {
+        try {
+            const response = await axios.get("http://localhost:8000/api/sma/notifications", { withCredentials: true })
+            setNotifications(response.data)
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
+    const fetchUnreadCount = async () => {
+        try {
+            const response = await axios.get("http://localhost:8000/api/sma/notifications/unread-count", { withCredentials: true })
+            setUnreadCount(response.data.unreadCount)
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
+    const markAsRead = async (notificationId) => {
+        try {
+            await axios.put(`http://localhost:8000/api/sma/notifications/${notificationId}/read`, {}, { withCredentials: true })
+            setNotifications(notifications.map(n => 
+                n._id === notificationId ? { ...n, read: true } : n
+            ))
+            setUnreadCount(prev => Math.max(0, prev - 1))
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
+    const markAllAsRead = async () => {
+        try {
+            await axios.put("http://localhost:8000/api/sma/notifications/mark-all-read", {}, { withCredentials: true })
+            setNotifications(notifications.map(n => ({ ...n, read: true })))
+            setUnreadCount(0)
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
+    const handleNotificationClick = (notification) => {
+        if (!notification.read) {
+            markAsRead(notification._id)
+        }
+        if (notification.type === 'follow') {
+            navigate(`/user/${notification.sender._id}`)
+        }
+        setIsNotificationOpen(false)
+    }
+
+    const getTimeAgo = (date) => {
+        const seconds = Math.floor((new Date() - new Date(date)) / 1000)
+        if (seconds < 60) return 'just now'
+        const minutes = Math.floor(seconds / 60)
+        if (minutes < 60) return `${minutes}m ago`
+        const hours = Math.floor(minutes / 60)
+        if (hours < 24) return `${hours}h ago`
+        const days = Math.floor(hours / 24)
+        if (days < 7) return `${days}d ago`
+        return new Date(date).toLocaleDateString()
     }
 
     useEffect(() => {
@@ -52,6 +118,9 @@ const NavBar = () => {
                 })
                 setProfile(true)
                 setLoading(false)
+                // Fetch notifications when authenticated
+                fetchNotifications()
+                fetchUnreadCount()
             } catch (err) {
                 console.error(err)
                 setLoading(false)
@@ -60,14 +129,25 @@ const NavBar = () => {
         fetchProfile()
     }, [])
 
+    // Poll for new notifications every 30 seconds
     useEffect(() => {
-        const closeDropdown = () => {
+        if (profile) {
+            const interval = setInterval(() => {
+                fetchUnreadCount()
+            }, 30000)
+            return () => clearInterval(interval)
+        }
+    }, [profile])
+
+    useEffect(() => {
+        const closeDropdown = (e) => {
             if (isOpen) setIsOpen(false)
+            if (isNotificationOpen) setIsNotificationOpen(false)
         }
 
         document.addEventListener("click", closeDropdown)
         return () => document.removeEventListener("click", closeDropdown)
-    }, [isOpen])
+    }, [isOpen, isNotificationOpen])
 
     return (
         <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-xl border-b border-gray-200 shadow-sm">
@@ -78,7 +158,7 @@ const NavBar = () => {
                         to={profile ? "/home" : "/login"}
                         className="font-black text-2xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent hover:from-blue-700 hover:to-purple-700 transition-all"
                     >
-                        FaceMook
+                        FaceRam
                     </Link>
 
                     {profile && (
@@ -104,16 +184,116 @@ const NavBar = () => {
                     <div className="flex items-center gap-4">
                         <SearchBtn />
 
+                        {/* Notification Bell */}
+                        <div className="relative">
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    setIsNotificationOpen(!isNotificationOpen)
+                                    setIsOpen(false)
+                                    if (!isNotificationOpen) {
+                                        fetchNotifications()
+                                    }
+                                }}
+                                className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-all"
+                            >
+                                <Bell className="h-5 w-5" />
+                                {unreadCount > 0 && (
+                                    <span className="absolute -top-0.5 -right-0.5 h-5 w-5 flex items-center justify-center text-xs font-bold text-white bg-red-500 rounded-full">
+                                        {unreadCount > 9 ? '9+' : unreadCount}
+                                    </span>
+                                )}
+                            </button>
+
+                            {isNotificationOpen && (
+                                <div className="absolute right-0 mt-3 w-80 rounded-2xl shadow-2xl bg-white ring-1 ring-black/5 focus:outline-none z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <div className="py-2">
+                                        {/* Header */}
+                                        <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                                            <h3 className="text-sm font-bold text-gray-900">Notifications</h3>
+                                            {unreadCount > 0 && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        markAllAsRead()
+                                                    }}
+                                                    className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                                                >
+                                                    <Check className="h-3 w-3" />
+                                                    Mark all read
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {/* Notifications List */}
+                                        <div className="max-h-80 overflow-y-auto">
+                                            {notifications.length > 0 ? (
+                                                notifications.map((notification) => (
+                                                    <div
+                                                        key={notification._id}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            handleNotificationClick(notification)
+                                                        }}
+                                                        className={`flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors ${
+                                                            notification.read 
+                                                                ? 'bg-white hover:bg-gray-50' 
+                                                                : 'bg-blue-50 hover:bg-blue-100'
+                                                        }`}
+                                                    >
+                                                        <Avatar className="h-10 w-10 flex-shrink-0">
+                                                            <AvatarImage 
+                                                                src={notification.sender?.profileImage ? `http://localhost:8000/uploads/${notification.sender.profileImage}` : undefined}
+                                                                alt={notification.sender?.username}
+                                                            />
+                                                            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white text-sm">
+                                                                {notification.sender?.username?.[0]?.toUpperCase() || 'U'}
+                                                            </AvatarFallback>
+                                                        </Avatar>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm text-gray-900">
+                                                                <span className="font-semibold">{notification.sender?.username}</span>
+                                                                {notification.type === 'follow' && ' started following you'}
+                                                            </p>
+                                                            <p className="text-xs text-gray-500 mt-0.5">
+                                                                {getTimeAgo(notification.createdAt)}
+                                                            </p>
+                                                        </div>
+                                                        {notification.type === 'follow' && (
+                                                            <UserPlus className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                                                        )}
+                                                        {!notification.read && (
+                                                            <div className="h-2 w-2 bg-blue-500 rounded-full flex-shrink-0" />
+                                                        )}
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="px-4 py-8 text-center text-gray-500">
+                                                    <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                                                    <p className="text-sm">No notifications yet</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Profile Dropdown */}
                         <div className="relative">
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation()
                                     setIsOpen(!isOpen)
+                                    setIsNotificationOpen(false)
                                 }}
                                 className="focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full transition-all hover:scale-105"
                             >
                                 <Avatar className="h-9 w-9 border-2 border-gray-200 hover:border-blue-500 transition-colors">
-                                    <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+                                    <AvatarImage 
+                                        src={data.profileImage ? `http://localhost:8000/uploads/${data.profileImage}` : undefined} 
+                                        alt={data.username} 
+                                    />
                                     <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white font-semibold">
                                         {data.username ? data.username.substring(0, 2).toUpperCase() : "CN"}
                                     </AvatarFallback>
